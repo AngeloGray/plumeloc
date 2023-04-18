@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from src.utils.setup_loggers import logger as _logger
 from src.utils import ros_commands
 from src.world.territory import Point, World
+from typing import Any
 
 # @dataclass
 # class Vertex:
@@ -24,6 +25,7 @@ class UAV:
     id_: int  # UAV's id
     # cur_vertex: Vertex
     cur_point: Point
+    publisher_obj: Any = None
 
     # def move_to(self, target_vertex: Vertex) -> None:
     #     """Moving to target_vertex"""
@@ -46,7 +48,16 @@ class UAV:
         self.cur_point = target_point
         print(f"UAV with id {self.id_} completed moving to {target_point}")
 
-    def plume_measure(self, sensor_plume: Point):
+    def measure_plume(self, sensor_plume: Point):
         print(f'UAV with id {self.id_} scanning Point x = {self.cur_point.x} y = {self.cur_point.y}')
         self.cur_point.c = sensor_plume.c
         print(f"the plume value is c = {self.cur_point.c}")
+
+    def mark_point(self):
+        print(f'Point x = {self.cur_point.x} y = {self.cur_point.y} marked as "checked" by UAV with id {self.id_}')
+        self.cur_point.is_checked = True
+
+    def post_to_chanel(self, message: str) -> None:
+        """Posting message to agent's chanel."""
+
+        ros_commands.send_message(self.publisher_obj, message)
