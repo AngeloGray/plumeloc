@@ -6,7 +6,7 @@ subsquares with coordinates {x,y} and plume concentration values V{x.y}
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 
-from src.config import TERRITORY_SIZE, PLUME_SIZE
+from src.config import TERRITORY_SIZE, PLUME_SIZE, WIND_DIRECTION
 
 
 @dataclass
@@ -16,8 +16,10 @@ class Point:
     id : int
     x: float
     y: float
+    wind: str
     c: float = 0.0
     is_checked: bool = False
+    weight: float = 0
 
 
 @dataclass
@@ -26,12 +28,21 @@ class World:
     world_size: int = TERRITORY_SIZE
     plume_size: int = PLUME_SIZE
     plume_location: str = "CENTRAL"
+    wind_direction: str = WIND_DIRECTION
 
     def _set_coords(self) -> None:
         point_id = 0
         for i in range(self.world_size):
             for j in range(self.world_size):
-                cur_point = Point(id=point_id, x=j, y=i)
+                cur_point = Point(id=point_id, x=j, y=i, wind=self.wind_direction)
+                self.points[(j, i)] = cur_point
+                point_id += 1
+
+    def _set_coords_uav(self) -> None:
+        point_id = 0
+        for i in range(self.world_size):
+            for j in range(self.world_size):
+                cur_point = Point(id=point_id, x=j, y=i, wind="UNKNOWN")
                 self.points[(j, i)] = cur_point
                 point_id += 1
 
@@ -47,9 +58,44 @@ class World:
                 plume_value -= 1.0 / (self.plume_size + 1)
                 plume_value = round(plume_value, 1)
 
+    def _plume_gen_dir_central(self):
+        pass
+
+    def _plume_gen_dir_north(self):
+        pass
+
+    def _plume_gen_dir_west(self):
+        pass
+
+    def _plume_gen_dir_east(self):
+        pass
+
+    def _plume_gen_dir_south(self):
+        pass
+
+    def _plume_gen_dir_custom(self):
+        pass
+
+    def plume_gen_directed(self):
+        if self.plume_location == "CENTRAL":
+            self._plume_gen_dir_central()
+        elif self.plume_location == "NORTH":
+            self._plume_gen_dir_north()
+        elif self.plume_location == "WEST":
+            self._plume_gen_dir_west()
+        elif self.plume_location == "EAST":
+            self._plume_gen_dir_east()
+        elif self.plume_location == "SOUTH":
+            self._plume_gen_dir_south()
+        elif self.plume_location == "CUSTOM":
+            self._plume_gen_dir_custom()
+
     def world_create(self):
         self._set_coords()
+        self.plume_gen()
 
+    def uav_world_create(self):
+        self._set_coords_uav()
     def get_point(self, _x: int, _y: int):
         print(f"the coordinates for point with id {self.points[(_x, _y)].id} are:\nx = {self.points[(_x, _y)].x}"
               f"\ny = {self.points[(_x, _y)].y}")

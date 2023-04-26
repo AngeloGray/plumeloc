@@ -22,4 +22,4 @@ def send_message(publisher, data):
         rate.sleep()
 
 
-rospy.init_node('command_node', anonymous=True)
+# rospy.init_node('command_node', anonymous=True)
