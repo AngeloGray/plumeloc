@@ -19,6 +19,7 @@ uav: List[UAV] = []
 for i in range(number_of_uavs):
     world_uav.append(World())
     world_uav[i].uav_world_create()
+    world_uav[i].world_paint()
     uav_id = i
     uav.append(UAV(
         id_=uav_id,
@@ -41,6 +42,7 @@ for i in range(number_of_uavs):
 
 world_global = World()
 world_global.world_create()
+world_global.world_paint()
 world_global.plume_gen()
 mission_is_active: bool = True
 

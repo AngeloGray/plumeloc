@@ -1,5 +1,5 @@
-import rospy
-from std_msgs.msg import String
+# import rospy
+# from std_msgs.msg import String
 
 
 def move_uav(id_ : int, x_cur: float, y_cur: float, x_tar: float, y_tar: float) -> None:

@@ -13,7 +13,7 @@ from src.config import TERRITORY_SIZE, PLUME_SIZE, WIND_DIRECTION
 class Point:
     """Defines point object which is included in world dictionary"""
     # coords: Coords
-    id : int
+    id: int
     x: float
     y: float
     wind: str
@@ -96,6 +96,7 @@ class World:
 
     def uav_world_create(self):
         self._set_coords_uav()
+
     def get_point(self, _x: int, _y: int):
         print(f"the coordinates for point with id {self.points[(_x, _y)].id} are:\nx = {self.points[(_x, _y)].x}"
               f"\ny = {self.points[(_x, _y)].y}")
@@ -113,4 +114,3 @@ class World:
 # world1.get_point(0, 5)
 # print(world1.points)
 # world1.world_paint()
-
