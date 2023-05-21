@@ -65,7 +65,37 @@ class World:
         pass
 
     def _plume_gen_dir_west(self):
-        pass
+        xc = yc = int ((self.world_size - 1) / 2)
+        lij = 4 # гиперпараметр
+        lijk = int(lij / 2)  # гиперпараметр lijk = 2
+        li0 = lij + lijk # гиперпараметр li0 = 6, уменьшается на 2 каждый раз
+        Lli = 11 # гиперпараметр для изначального лепестка Ll1 = 11, увеличивается на 4 каждый раз
+
+        for leaf_id in range(0, 5):
+            if leaf_id == 0:
+                self.points[(xc, yc)].c = 1 # точка с источником
+
+            if leaf_id == 1:
+                for i in range(0, leaf_id + 1):
+                    if i == 0:
+                        for m in range(1, Lli + 1): # от 1 до 11
+                            self.points[(xc + m, yc)].c = (1 - 0.25 * leaf_id)
+                    if i == 1:
+                        for m in range(li0 + 1, Lli):  # от 7 до 10 для верхней части лепестка
+                            self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
+                        for m in range(li0 + 1, Lli):  # от 7 до 10 для нижней части лепестка
+                            self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
+
+
+
+
+
+
+                
+
+
+
+
 
     def _plume_gen_dir_east(self):
         pass
@@ -93,6 +123,11 @@ class World:
     def world_create(self):
         self._set_coords()
         self.plume_gen()
+
+    def test_world_create(self):
+        self._set_coords()
+        self._plume_gen_dir_west()
+        self.world_paint()
 
     def uav_world_create(self):
         self._set_coords_uav()

@@ -41,8 +41,10 @@ for i in range(number_of_uavs):
     uav[i].paint_weights_map()
 
 world_global = World()
-world_global.world_create()
-world_global.world_paint()
+# world_global.world_create()
+world_global.test_world_create()
+print("\n\n\nchecking work of test_world_\n\n\n")
+# world_global.world_paint()
 world_global.plume_gen()
 mission_is_active: bool = True
 
