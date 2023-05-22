@@ -135,6 +135,9 @@ class World:
                             self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
                             self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
 
+            if leaf_id == 4:
+
+
 
 
 
