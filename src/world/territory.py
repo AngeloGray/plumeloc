@@ -83,9 +83,8 @@ class World:
                         for m in range(1, Lli + 1): # от 1 до 11
                             self.points[(xc + m, yc)].c = (1 - 0.25 * leaf_id)
                     if i == 1:
-                        for m in range(li0 + lijk_half, li0 + lij + 1):  # от 7 до 10 для верхней части лепестка
+                        for m in range(li0 + lijk_half, li0 + lij + 1):  # от 7 до 10 сверху и снизу
                             self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
-                        for m in range(li0 + lijk_half, li0 + lij + 1):  # от 7 до 10 для нижней части лепестка
                             self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
 
             if leaf_id == 2:
@@ -96,15 +95,16 @@ class World:
                         for m in range(Lli - lij + 1, Lli + 1): # от 12 до 15 - середина
                             self.points[(xc + m, yc)].c = (1 - 0.25 * leaf_id)
                     if i == 1:
-                        # от 5,6 & 11,12,13,14 для верхней части лепестка
+                        # от 5,6 & 11,12,13,14 для верхней и нижней части лепестка
                         for m in range(li0 + lijk_half, li0 + lij_half + 1):  # 5, 6
                             self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
-                        for m in range(Lli - lij, (Lli - lijk_half) + 1):  # 11, 12, 13, 14
-                            self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
-                        # от 5,6 & 11,12,13,14 для нижней части лепестка
-                        for m in range(li0 + lijk_half, li0 + lij_half + 1):  # 5, 6
                             self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
                         for m in range(Lli - lij, (Lli - lijk_half) + 1):  # 11, 12, 13, 14
+                            self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
+                            self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
+                    if i == 2:
+                        for m in range(li0 + lij + lijk_half, li0 + (i * lij) + 1):  # от 9 до 12 сверху и снизу
+                            self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
                             self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
 
 
