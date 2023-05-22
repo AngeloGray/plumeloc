@@ -67,7 +67,9 @@ class World:
     def _plume_gen_dir_west(self):
         xc = yc = int ((self.world_size - 1) / 2)
         lij = 4 # гиперпараметр
+        lij_half = int(lij / 2)
         lijk = int(lij / 2)  # гиперпараметр lijk = 2
+        lijk_half = int(lijk / 2)
         li0 = lij + lijk # гиперпараметр li0 = 6, уменьшается на 2 каждый раз
         Lli = 11 # гиперпараметр для изначального лепестка Ll1 = 11, увеличивается на 4 каждый раз
 
@@ -81,10 +83,32 @@ class World:
                         for m in range(1, Lli + 1): # от 1 до 11
                             self.points[(xc + m, yc)].c = (1 - 0.25 * leaf_id)
                     if i == 1:
-                        for m in range(li0 + 1, Lli):  # от 7 до 10 для верхней части лепестка
+                        for m in range(li0 + lijk_half, li0 + lij + 1):  # от 7 до 10 для верхней части лепестка
                             self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
-                        for m in range(li0 + 1, Lli):  # от 7 до 10 для нижней части лепестка
+                        for m in range(li0 + lijk_half, li0 + lij + 1):  # от 7 до 10 для нижней части лепестка
                             self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
+
+            if leaf_id == 2:
+                Lli += 4 # Изменение в соответствии с моделью
+                li0 -= 2  # Изменение в соответствии с моделью
+                for i in range(0, leaf_id + 1):
+                    if i == 0:
+                        for m in range(Lli - lij + 1, Lli + 1): # от 12 до 15 - середина
+                            self.points[(xc + m, yc)].c = (1 - 0.25 * leaf_id)
+                    if i == 1:
+                        # от 5,6 & 11,12,13,14 для верхней части лепестка
+                        for m in range(li0 + lijk_half, li0 + lij_half + 1):  # 5, 6
+                            self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
+                        for m in range(Lli - lij, (Lli - lijk_half) + 1):  # 11, 12, 13, 14
+                            self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
+                        # от 5,6 & 11,12,13,14 для нижней части лепестка
+                        for m in range(li0 + lijk_half, li0 + lij_half + 1):  # 5, 6
+                            self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
+                        for m in range(Lli - lij, (Lli - lijk_half) + 1):  # 11, 12, 13, 14
+                            self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
+
+
+
 
 
 
