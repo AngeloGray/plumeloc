@@ -5,11 +5,12 @@ from src.world.territory import Point, World
 from src.objects import UAV
 
 # Задаём количество дронов и их начальные позиции
-number_of_uavs: int = 3
+number_of_uavs: int = 4
 UAV_INITIAL_POSITIONS = {
     0: (0, 0),
-    1: (7, 0),
-    2: (14, 0)
+    1: (14, 0),
+    2: (0, 14),
+    3: (14,14)
 }
 
 # Подготавливаем списки для карт территории для каждого дрона и внедряем их в соответствующие объекты дрона
@@ -43,8 +44,8 @@ for i in range(number_of_uavs):
 world_global = World()
 # world_global.world_create()
 world_global.test_world_create()
-# world_global.world_paint()
-world_global.plume_gen()
+world_global.world_paint()
+# world_global.plume_gen()
 mission_is_active: bool = True
 
 logs_file = open('painted_movings.txt', 'w')
@@ -77,8 +78,8 @@ while mission_is_active:
         if uav[n].cur_point.c == 1.0:
             mission_is_active = False
         else:
-            uav[n].cur_point.weight = 0
-            uav[n].uav_world.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))].weight = 0
+            uav[n].cur_point.weight = n
+            uav[n].uav_world.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))].weight = n
 
 
         uav[i].paint_weights_map()

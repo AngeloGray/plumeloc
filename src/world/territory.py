@@ -25,6 +25,7 @@ class Point:
 @dataclass
 class World:
     points: Dict[Tuple[int, int], Point] = field(default_factory=dict)
+    points_temp: Dict[Tuple[int, int], Point] = field(default_factory=dict)
     world_size: int = TERRITORY_SIZE
     plume_size: int = PLUME_SIZE
     plume_location: str = "CENTRAL"
@@ -36,6 +37,14 @@ class World:
             for j in range(self.world_size):
                 cur_point = Point(id=point_id, x=j, y=i, wind=self.wind_direction)
                 self.points[(j, i)] = cur_point
+                point_id += 1
+
+    def _set_temp_coords(self) -> None:
+        point_id = 0
+        for i in range(self.world_size):
+            for j in range(self.world_size):
+                cur_point = Point(id=point_id, x=j, y=i, wind=self.wind_direction)
+                self.points_temp[(j, i)] = cur_point
                 point_id += 1
 
     def _set_coords_uav(self) -> None:
@@ -57,12 +66,6 @@ class World:
                             self.points[(i, j)].c = plume_value
                 plume_value -= 1.0 / (self.plume_size + 1)
                 plume_value = round(plume_value, 1)
-
-    def _plume_gen_dir_central(self):
-        pass
-
-    def _plume_gen_dir_north(self):
-        pass
 
     def _plume_gen_dir_west(self):
         xc = yc = int ((self.world_size - 1) / 2)
@@ -174,49 +177,132 @@ class World:
                             self.points[(xc + m, yc + i)].c = 0.1
                             self.points[(xc + m, yc - i)].c = 0.1
 
+    def _plume_gen_dir_west_exp(self):
+        xc = yc = int ((self.world_size - 1) / 2)
+        lij = 4 # гиперпараметр
+        lij_half = int(lij / 2)
+        lijk = int(lij / 2)  # гиперпараметр lijk = 2
+        lijk_half = int(lijk / 2)
+        li0 = lij + lijk # гиперпараметр li0 = 6, уменьшается на 2 каждый раз
+        Lli = 11 # гиперпараметр для изначального лепестка Ll1 = 11, увеличивается на 4 каждый раз
+        for leaf_id in range(0, 5):
+            if leaf_id == 0:
+                self.points[(xc, yc)].c = 1  # точка с источником
+            else:
+                for kl in range(0, leaf_id + 1):
+                    # Начальная стадия - отрост середины
+                    if kl == 0:
+                        if leaf_id == 1:
+                            for m in range(1, Lli + 1):  # середина для первого лепестка от 1 до 11
+                                self.points[(xc + m, yc)].c = (1 - (0.1 * leaf_id))
+                        else:
+                            for m in range(Lli - lij + 1, Lli + 1):  # середина для остальных
+                                self.points[(xc + m, yc)].c = (1 - 0.1 * leaf_id)
+                    # Серединная стадия
+                    if leaf_id - kl > 0:
+                        for m in range(li0 + lijk_half, li0 + lij_half + 1):
+                            self.points[(xc + m, yc + kl)].c = (1 - 0.1 * leaf_id)
+                            self.points[(xc + m, yc - kl)].c = (1 - 0.1 * leaf_id)
+                        for m in range(Lli - lij, (Lli - lijk_half) + 1):
+                            self.points[(xc + m, yc + kl)].c = (1 - 0.1 * leaf_id)
+                            self.points[(xc + m, yc - kl)].c = (1 - 0.1 * leaf_id)
+                    # Конечная стадия - края лепестка
+                    if kl == leaf_id:
+                        for m in range(li0 + (lij * (kl - 1)) + lijk_half, li0 + (kl * lij) + 1):
+                            self.points[(xc + m, yc + kl)].c = (1 - 0.1 * leaf_id)
+                            self.points[(xc + m, yc - kl)].c = (1 - 0.1 * leaf_id)
+            # Обновление гиперпараметров
+            if leaf_id != 0:
+                Lli += 4  # Изменение в соответствии с моделью
+                li0 -= 2  # Изменение в соответствии с моделью
+            else:
+                pass
 
+    def _plume_gen_dir_north(self):
+        """
+        Направление ветра - NORTH (Север), загрязнение направлено вниз
+        1) генерируем направленное направо WEST
+        2) поворачиваем трижды против часовой стрелки
+        """
+        self._plume_gen_dir_west()
+        self._plume_rotate()
+        self._plume_rotate()
+        self._plume_rotate()
 
-
-
-
-
-
-                
-
-
-
-
-
-    def _plume_gen_dir_east(self):
-        pass
+    def _plume_gen_dir_east(self) -> None:
+        """
+        Направление ветра - EAST (Восток), загрязнение направлено налево
+        1) генерируем направленное направо WEST
+        2) поворачиваем дважды против часовой стрелки
+        """
+        self._plume_gen_dir_west()
+        self._plume_rotate()
+        self._plume_rotate()
 
     def _plume_gen_dir_south(self):
+        """
+                Направление ветра - SOUTH (Юг), загрязнение направлено вверх
+                1) генерируем направленное направо WEST
+                2) поворачиваем против часовой стрелки
+                """
+        self._plume_gen_dir_west()
+        self._plume_rotate()
+
+    def _plume_gen_loc_custom(self):
         pass
 
-    def _plume_gen_dir_custom(self):
+    def _plume_gen_loc_central(self):
+        self._plume_gen_dir_west()
+
+    def _plume_gen_loc_west(self):
         pass
+
+    def _plume_gen_loc_east(self):
+        pass
+
+    def _plume_gen_loc_south(self):
+        pass
+
+    def _plume_gen_loc_north(self):
+        pass
+
+    def _plume_rotate(self):
+        xc = yc = int ((self.world_size - 1) / 2)
+        for i in range(self.world_size - 1, 0, -1):
+            for j in range(self.world_size):
+                self.points_temp[(xc - (i - yc), j)].c = self.points[(j, i)].c
+        for i in range(self.world_size - 1, 0, -1):
+            for j in range(self.world_size):
+                self.points[(j, i)].c = self.points_temp[(j, i)].c
 
     def plume_gen_directed(self):
+        wind_direction = self.wind_direction
         if self.plume_location == "CENTRAL":
-            self._plume_gen_dir_central()
+            self._plume_gen_loc_central()
         elif self.plume_location == "NORTH":
-            self._plume_gen_dir_north()
+            self._plume_gen_loc_north()
         elif self.plume_location == "WEST":
-            self._plume_gen_dir_west()
+            self._plume_gen_loc_west()
         elif self.plume_location == "EAST":
-            self._plume_gen_dir_east()
+            self._plume_gen_loc_east()
         elif self.plume_location == "SOUTH":
-            self._plume_gen_dir_south()
+            self._plume_gen_loc_south()
         elif self.plume_location == "CUSTOM":
-            self._plume_gen_dir_custom()
+            self._plume_gen_loc_custom()
 
     def world_create(self):
         self._set_coords()
         self.plume_gen()
+        # self.plume_gen_directed()
 
     def test_world_create(self):
         self._set_coords()
+        self._set_temp_coords()
         self._plume_gen_dir_west()
+        self.world_paint()
+        self._plume_rotate()
+        self.world_paint()
+        self._plume_rotate()
         self.world_paint()
 
     def uav_world_create(self):
@@ -226,13 +312,26 @@ class World:
         print(f"the coordinates for point with id {self.points[(_x, _y)].id} are:\nx = {self.points[(_x, _y)].x}"
               f"\ny = {self.points[(_x, _y)].y}")
 
-    def world_paint(self):
+    def world_paint_old(self):
         for i in range(self.world_size-1, 0, -1):
             for j in range(self.world_size):
-                print(f"{self.points[(j, i)].c}   ", end='')
+                print(f"{self.points[(j, i)].c}    ", end='')
                 if j == self.world_size - 1:
                     print("\n")
 
+    def world_paint(self) -> None:
+        print(f"C's map for world")
+        for i in range(self.world_size - 1, -1, -1):
+            for j in range(self.world_size):
+                if self.points[(j, i)].c == 1:
+                    print(f"{self.points[(j, i)].c}", end='   ')
+                elif self.points[(j, i)].c * 100 % 10 == 0:
+                    print(f"{self.points[(j, i)].c}", end=' ')
+                elif self.points[(j, i)].c * 100 % 10 != 0:
+                    print(f"{self.points[(j, i)].c}", end='')
+                print("  ", end='')
+                if j == self.world_size - 1:
+                    print("\n")
 # world1 = World(world_size=21, plume_size=4)
 # world1.world_create()
 # world1.plume_gen()
