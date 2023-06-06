@@ -5,18 +5,20 @@ from src.world.territory import Point, World
 from src.objects import UAV
 
 # Задаём количество дронов и их начальные позиции
-number_of_uavs: int = 4
+number_of_uavs: int = 2
 UAV_INITIAL_POSITIONS = {
     0: (0, 0),
-    1: (14, 0),
-    2: (0, 14),
-    3: (14,14)
+    1: (52, 0),
 }
 
 # Подготавливаем списки для карт территории для каждого дрона и внедряем их в соответствующие объекты дрона
 world_uav: List[World] = []
 uav: List[UAV] = []
 
+# С помощью цикла для каждого мира дрона:
+# 1) создается мир
+# 2) Этот мир рисуется в консоль
+# 3) Для каждого дрона создается отдельный экземпляр класса UAV с встроенным объектом uav_world
 for i in range(number_of_uavs):
     world_uav.append(World())
     world_uav[i].uav_world_create()
@@ -27,8 +29,9 @@ for i in range(number_of_uavs):
         cur_point=world_uav[i].points[UAV_INITIAL_POSITIONS[uav_id]],
         uav_world=world_uav[i]
     ))
-    uav[i].calculate_weights()
-    uav[i].paint_weights_map()
+    uav[i].calculate_weights()  # Подсчет весов на карте мира каждого дрона
+    uav[i].paint_weights_map()  # Отображение мира каждого дрона в консоли
+
 
 if number_of_uavs > 1:
     another_worlds: List[World] = []

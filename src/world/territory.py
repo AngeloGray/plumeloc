@@ -5,6 +5,7 @@ subsquares with coordinates {x,y} and plume concentration values V{x.y}
 """
 from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
+from math import sqrt
 
 from src.config import TERRITORY_SIZE, PLUME_SIZE, WIND_DIRECTION
 
