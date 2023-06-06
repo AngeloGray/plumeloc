@@ -6,6 +6,7 @@ Defining objects used in package:
 
 """
 from dataclasses import dataclass, field
+from math import sqrt
 from src.utils.setup_loggers import logger as _logger
 from src.utils import ros_commands
 from src.world.territory import Point, World
@@ -73,15 +74,23 @@ class UAV:
                 if self.uav_world.points[(j, i)].x == self.cur_point.x and self.uav_world.points[(j, i)].y == self.cur_point.y:
                     self.uav_world.points[(j, i)].weight = 0
                 else:
-                    self.uav_world.points[(j, i)].weight = max(abs(self.uav_world.points[(j, i)].x - self.cur_point.x),
-                                                               abs(self.uav_world.points[(j, i)].y - self.cur_point.y))
+                    diff_min = min(abs(self.uav_world.points[(j, i)].x - self.cur_point.x),
+                                   abs(self.uav_world.points[(j, i)].y - self.cur_point.y))
+                    diff_max = max(abs(self.uav_world.points[(j, i)].x - self.cur_point.x),
+                                   abs(self.uav_world.points[(j, i)].y - self.cur_point.y))
+                    # Старая модель подсчёта весов без учёта движения по диагонали
+                    # self.uav_world.points[(j, i)].weight = max(abs(self.uav_world.points[(j, i)].x -self.cur_point.x),
+                    #                                            abs(self.uav_world.points[(j, i)].y -self.cur_point.y))
+                    # Новая модель подсчёта весов в зависимости от расстояния
+                    self.uav_world.points[(j, i)].weight = (diff_max - diff_min) + (diff_min * sqrt(2))
 
     def merge_weights(self, another_worlds: List[World]):
         for n in range(len(another_worlds)):
             for i in range(self.uav_world.world_size):
                 for j in range(self.uav_world.world_size):
-                    self.uav_world.points[(j, i)].weight = self.uav_world.points[(j, i)].weight * another_worlds[n].points[
-                        (j, i)].weight
+                    self.uav_world.points[(j, i)].weight = self.uav_world.points[(j, i)].weight * \
+                                                           another_worlds[n].points[
+                                                               (j, i)].weight
 
     def get_target_point(self, shift: int = 0):
         nearby_points_coords: list = self._get_nearby_points_coords()
@@ -104,7 +113,7 @@ class UAV:
         existing_points: list = []
         xc, yc = self.cur_point.x, self.cur_point.y
         neighbour_points = [(xc + 1, yc + 1), (xc + 1, yc), (xc + 1, yc - 1), (xc, yc - 1), (xc - 1, yc - 1),
-        (xc - 1, yc), (xc - 1, yc + 1), (xc, yc + 1)]
+                            (xc - 1, yc), (xc - 1, yc + 1), (xc, yc + 1)]
         for i in range(8):
             if (0 <= neighbour_points[i][0] < self.uav_world.world_size
                     and 0 <= neighbour_points[i][1] < self.uav_world.world_size):
@@ -118,13 +127,13 @@ class UAV:
                 if self.uav_world.points[(j, i)].id == ((self.uav_world.world_size ** 2) - 1) / 2:
                     print("[", end='')
                 if self.uav_world.points[(j, i)].weight < 10:
-                    print(f"   {self.uav_world.points[(j, i)].weight}", end='')
+                    print(f"   {self.uav_world.points[(j, i)].weight:.2f}", end='')
                 elif self.uav_world.points[(j, i)].weight < 100:
-                    print(f"  {self.uav_world.points[(j, i)].weight}", end='')
+                    print(f"  {self.uav_world.points[(j, i)].weight:.2f}", end='')
                 elif self.uav_world.points[(j, i)].weight < 1000:
-                    print(f" {self.uav_world.points[(j, i)].weight}", end='')
+                    print(f" {self.uav_world.points[(j, i)].weight:.2f}", end='')
                 elif self.uav_world.points[(j, i)].weight >= 1000:
-                    print(f"{self.uav_world.points[(j, i)].weight}", end='')
+                    print(f"{self.uav_world.points[(j, i)].weight:.2f}", end='')
                 if self.uav_world.points[(j, i)].id == ((self.uav_world.world_size ** 2) - 1) / 2:
                     print("]", end='')
                 print("   ", end='')
