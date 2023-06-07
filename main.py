@@ -1,8 +1,10 @@
+import time
 from time import sleep
 from typing import List, Dict, Tuple
 # from src.utils import ros_commands
 from src.world.territory import Point, World
 from src.objects import UAV
+from src.utils.data_visualisation import mpl_paint_weights_map
 
 # Задаём количество дронов и их начальные позиции
 number_of_uavs: int = 2
@@ -31,6 +33,7 @@ for i in range(number_of_uavs):
     ))
     uav[i].calculate_weights()  # Подсчет весов на карте мира каждого дрона
     uav[i].paint_weights_map()  # Отображение мира каждого дрона в консоли
+    #mpl_paint_weights_map(uav[i], time_iter=0, uav_id=0)
 
 
 if number_of_uavs > 1:
@@ -52,7 +55,8 @@ world_global.world_paint()
 mission_is_active: bool = True
 
 logs_file = open('painted_movings.txt', 'w')
-
+time_stamp: int = 0
+temp_time = time.time_ns()
 while mission_is_active:
     for n in range(number_of_uavs):
         uav[n].get_target_point()
@@ -68,7 +72,6 @@ while mission_is_active:
                         if uav[i].target_point.id != uav[j].target_point.id:
                             break
 
-
     for n in range(number_of_uavs):
         # uav[n].measure_plume(world_global.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))])
         # logs_file.write(f"uav with id {n} measured c = {uav[n].cur_point.c} in Point ({uav[n].cur_point.x}, {uav[n].cur_point.y})\n")
@@ -83,11 +86,13 @@ while mission_is_active:
         else:
             uav[n].cur_point.weight = n
             uav[n].uav_world.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))].weight = n
-
-
-        uav[i].paint_weights_map()
-        sleep(0.2)
-
+        uav[n].paint_weights_map()
+        if (n + 1) % number_of_uavs == 0:
+            print(f'creating image for timestamp t = {time_stamp}, Задержка: {(time.time_ns() - temp_time)/(10**9)}')
+            mpl_paint_weights_map(uav[n], time_stamp, n)
+            temp_time = time.time_ns()
+        print(f'\niter {time_stamp}  for uav id{n} complete\n- - - - - - - - - - - - - - - - - - - - - - -')
+    time_stamp += 1
 
 
 
