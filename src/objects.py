@@ -28,9 +28,13 @@ class UAV:
     # cur_vertex: Vertex
     uav_world: World
     cur_point: Point
+    cur_mode: str  # Текущий режим: 'search' - обход территории, 'localize' - локализация источника загрязнения
+    anemometer_data: str
+    spec_flag: int
     target_point: Point = None
     publisher_obj: Any = None
     time_iterations: Dict[int, int] = field(default_factory=dict)
+
 
     # def move_to(self, target_vertex: Vertex) -> None:
     #     """Moving to target_vertex"""
@@ -139,7 +143,12 @@ class UAV:
                 print("   ", end='')
                 if j == self.uav_world.world_size - 1:
                     print("\n")
-    # def post_to_chanel(self, message: str) -> None:
-    #     """Posting message to agent's chanel."""
-    #
-    #     ros_commands.send_message(self.publisher_obj, message)
+
+    def move_to_direction(self, direction: str) -> tuple[int, int]:
+        if
+
+
+    def get_target_point_localization(self):
+        if self.cur_point.c != 0 and self.spec_flag == 0:
+            direction = self.anemometer_data
+            self.target_point = self.uav_world.points[self.move_to_direction(direction)]

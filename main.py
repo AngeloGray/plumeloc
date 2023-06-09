@@ -31,7 +31,9 @@ for i in range(number_of_uavs):
     uav.append(UAV(
         id_=uav_id,
         cur_point=world_uav[i].points[UAV_INITIAL_POSITIONS[uav_id]],
-        uav_world=world_uav[i]
+        uav_world=world_uav[i],
+        cur_mode='search',
+        spec_flag=0
     ))
     uav[i].calculate_weights()  # Подсчет весов на карте мира каждого дрона
     uav[i].paint_weights_map()  # Отображение мира каждого дрона в консоли
@@ -96,6 +98,27 @@ while mission_is_active:
         print(f'\niter {time_stamp}  for uav id{n} complete\n- - - - - - - - - - - - - - - - - - - - - - -')
     time_stamp += 1
 
+# Модифицированный цикл прохождения по алгоритму с добавлением режима локализации
+mission_is_active: bool = False
+time_stamp: int = 0
+while mission_is_active:
+    for n in range(number_of_uavs):
+        if uav[n].cur_mode == 'search':
+            uav[n].get_target_point()
+        if uav[n].cur_mode == 'localize':
+            uav[n].get_target_point_localization()
+
+    # Условие для недопуска одновременного движения двух дронов на одну и ту же координату (на доработке)
+    # for i in range(number_of_uavs):
+    #     for j in range(number_of_uavs):
+    #         if i != j:
+    #             if uav[i].target_point.id == uav[j].target_point.id:
+    #                 print(f'uav{i} and uav{j} has same target point')
+    #                 logs_file.write(f'uav{i} and uav{j} has same target point')
+    #                 for shift_value in range(8):
+    #                     uav[i].get_target_point(shift=shift_value)
+    #                     if uav[i].target_point.id != uav[j].target_point.id:
+    #                         break
 
 
 
