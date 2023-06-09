@@ -14,7 +14,7 @@ def mpl_paint_weights_map(uav: UAV, time_iter: int, uav_id: int) -> None:
             array_2d[(-j+52)][i] = uav.uav_world.points[(i, j)].weight
 
     fig, ax = plt.subplots()
-    fig.set_size_inches(15, 15)
+    fig.set_size_inches(25, 25)
     im = ax.imshow(array_2d)
     x_labels = list(range(TERRITORY_SIZE))
     x_labels = list(map(str, x_labels))
@@ -32,7 +32,7 @@ def mpl_paint_weights_map(uav: UAV, time_iter: int, uav_id: int) -> None:
     # Loop over data dimensions and create text annotations.
     for i in range(TERRITORY_SIZE):
         for j in range(TERRITORY_SIZE):
-            if (i, j) == (25, 25):
+            if (i, j) == (26, 26):
                 text = ax.text(j, i, round(array_2d[i][j]),
                                ha="center", va="center", color="yellow", fontsize='xx-small', fontweight='extra bold')
             else:
@@ -43,6 +43,8 @@ def mpl_paint_weights_map(uav: UAV, time_iter: int, uav_id: int) -> None:
     fig.tight_layout()
     #plt.show()
     fig.savefig(f'temp_images/figure{time.time_ns()}.png')
+    fig.clear()
+    plt.close(fig)
     print('paiting complete!')
 
 # # Попытка реализовать сначала с простыми числами:
@@ -107,16 +109,3 @@ def mpl_paint_weights_map(uav: UAV, time_iter: int, uav_id: int) -> None:
 # ax.set_title("Harvest of local farmers (in tons/year)")
 # fig.tight_layout()
 # plt.show()e
-
-import imageio
-import os
-
-# Create a list of image filenames
-filenames = os.listdir('C:/Users/Admin/PycharmProjects/plumeloc/temp_images')
-
-# Read the images and save them as frames in a GIF
-with imageio.get_writer('animation.gif', mode='I') as writer:
-    for filename in filenames:
-        filename_temp = 'C:/Users/Admin/PycharmProjects/plumeloc/temp_images/' + filename
-        image = imageio.imread(filename_temp)
-        writer.append_data(image)

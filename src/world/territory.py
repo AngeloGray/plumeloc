@@ -301,10 +301,6 @@ class World:
         self._set_temp_coords()
         self._plume_gen_dir_west()
         self.world_paint()
-        self._plume_rotate()
-        self.world_paint()
-        self._plume_rotate()
-        self.world_paint()
 
     def uav_world_create(self):
         self._set_coords_uav()

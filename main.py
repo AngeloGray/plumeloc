@@ -7,10 +7,12 @@ from src.objects import UAV
 from src.utils.data_visualisation import mpl_paint_weights_map
 
 # Задаём количество дронов и их начальные позиции
-number_of_uavs: int = 2
+number_of_uavs: int = 4
 UAV_INITIAL_POSITIONS = {
-    0: (0, 0),
-    1: (52, 0),
+    0: (13, 13),
+    1: (13, 39),
+    2: (39, 13),
+    3: (39, 39)
 }
 
 # Подготавливаем списки для карт территории для каждого дрона и внедряем их в соответствующие объекты дрона
