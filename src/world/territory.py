@@ -15,8 +15,8 @@ class Point:
     """Defines point object which is included in world dictionary"""
     # coords: Coords
     id: int
-    x: float
-    y: float
+    x: int
+    y: int
     wind: str
     c: float = 0.0
     is_checked: bool = False

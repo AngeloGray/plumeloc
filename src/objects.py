@@ -5,6 +5,7 @@ Defining objects used in package:
 - UAV - agent class, defining the methods UAV can perform
 
 """
+import math
 from dataclasses import dataclass, field
 from math import sqrt
 from src.utils.setup_loggers import logger as _logger
@@ -13,62 +14,52 @@ from src.world.territory import Point, World
 from typing import Any, Dict, List, Tuple
 
 
-# @dataclass
-# class Vertex:
-#     id_: int
-#     x: float
-#     y: float
-#     plume_value: float
-
-
 @dataclass
 class UAV:
-    """Defining UAV-agent methods and attributes"""
-    id_: int  # UAV's id
+    """Object representing single UAV and his behaviour"""
+    id: int  # UAV's id
     # cur_vertex: Vertex
     uav_world: World
     cur_point: Point
     cur_mode: str  # Текущий режим: 'search' - обход территории, 'localize' - локализация источника загрязнения
-    anemometer_data: str
-    spec_flag: int
+    localize_stage: str = "UNKNOWN"
+    return_stage: str = "UNKNOWN"
+    temp_moving_direction: str = "UNKNOWN"
+    anemometer_data: str = "UNKNOWN"
+    to_plume_direction: str = "UNKNOWN"
     target_point: Point = None
     publisher_obj: Any = None
     time_iterations: Dict[int, int] = field(default_factory=dict)
 
-
-    # def move_to(self, target_vertex: Vertex) -> None:
-    #     """Moving to target_vertex"""
-    #     _logger.info(f'UAV with id {self.id_} moving to {target_vertex} from {self.cur_vertex}')
-    #     ros_commands.move_uav(self.id_,
-    #                           self.cur_vertex.x,
-    #                           self.cur_vertex.y,
-    #                           target_vertex.x,
-    #                           target_vertex.y)
-    #     self.cur_vertex = target_vertex
-    #     _logger.info(f"UAV with id {self.id_} completed moving to {target_vertex}")
     def move_to(self, target_point: Point) -> None:
-        """Moving to target_vertex"""
-        print(f'UAV with id {self.id_} moving to {target_point} from {self.cur_point}')
-        # ros_commands.move_uav(self.id_,
+        """Moving to target_point"""
+        print(f'UAV with id {self.id} moving to {target_point} from {self.cur_point}')
+        # ros_commands.move_uav(self.id,
         #                       self.cur_point.x,
         #                       self.cur_point.y,
         #                       target_point.x,
         #                       target_point.y)
         self.cur_point = target_point
-        print(f"UAV with id {self.id_} completed moving to {target_point}")
+        print(f"UAV with id {self.id} completed moving to {target_point}")
 
     def measure_plume(self, sensor_plume: Point) -> None:
-        print(f'UAV with id {self.id_} scanning Point x = {self.cur_point.x} y = {self.cur_point.y}')
+        """
+        "measuring" plume from cur_point Point and getting concentration "point.c"
+        """
+        print(f'UAV with id {self.id} scanning Point x = {self.cur_point.x} y = {self.cur_point.y}')
         self.cur_point.c = sensor_plume.c
         print(f"the plume value is c = {self.cur_point.c}")
 
     def measure_wind_direction(self, sensor_wind_direction: Point) -> None:
-        print(f'UAV with id {self.id_} measures wind at Point x = {self.cur_point.x} y = {self.cur_point.y}')
+        """modeling anemometer measurements at cur_point Point and getting wind direction"""
+        print(f'UAV with id {self.id} measures wind at Point x = {self.cur_point.x} y = {self.cur_point.y}')
         self.cur_point.wind = sensor_wind_direction.wind
+        self.anemometer_data = sensor_wind_direction.wind
         print(f"the wind direction is c = {self.cur_point.wind}")
 
     def mark_point(self) -> None:
-        print(f'Point x = {self.cur_point.x} y = {self.cur_point.y} marked as "checked" by UAV with id {self.id_}')
+        """function is not used"""
+        print(f'Point x = {self.cur_point.x} y = {self.cur_point.y} marked as "checked" by UAV with id {self.id}')
         self.cur_point.is_checked = True
 
     def calculate_weights(self) -> None:
@@ -86,9 +77,13 @@ class UAV:
                     # self.uav_world.points[(j, i)].weight = max(abs(self.uav_world.points[(j, i)].x -self.cur_point.x),
                     #                                            abs(self.uav_world.points[(j, i)].y -self.cur_point.y))
                     # Новая модель подсчёта весов в зависимости от расстояния
-                    self.uav_world.points[(j, i)].weight = (diff_max - diff_min) + (diff_min * sqrt(2))
-
+                    # self.uav_world.points[(j, i)].weight = (diff_max - diff_min) + (diff_min * sqrt(2))
+                    self.uav_world.points[(j, i)].weight = math.sqrt(
+                        (self.uav_world.points[(j, i)].x - self.cur_point.x) ** 2
+                        + (self.uav_world.points[(j, i)].y - self.cur_point.y) ** 2
+                    )
     def merge_weights(self, another_worlds: List[World]):
+        """Функция для последовательного перемножения карт весов всех дронов"""
         for n in range(len(another_worlds)):
             for i in range(self.uav_world.world_size):
                 for j in range(self.uav_world.world_size):
@@ -96,11 +91,15 @@ class UAV:
                                                            another_worlds[n].points[
                                                                (j, i)].weight
 
-    def get_target_point(self, shift: int = 0):
+    def get_target_point_searching(self, shift: int = 0):
+        """"Головная функция по выбору точки, в которую будет направляться дрон в следующий момент времени"""
+        # Получение всех существующих соседних точек и их координат в виде списка
         nearby_points_coords: list = self._get_nearby_points_coords()
-        print(f"uav{self.id_} at ({self.cur_point.x},{self.cur_point.y}) and nearby points are\n{nearby_points_coords}")
+        print(f"uav{self.id} at ({self.cur_point.x},{self.cur_point.y}) and nearby points are\n{nearby_points_coords}")
+        # Выбор из всех соседних точек нужной с наибольшим весом
         target_point_coords: Tuple = self._get_target_point(nearby_points_coords, shift)
-        print(f'uav{self.id_} chosen {target_point_coords} as target point')
+        print(f'uav{self.id} chosen {target_point_coords} as target point')
+        # Присвоение координат целевой точке в соответствии с расчётами выше
         self.target_point = self.uav_world.points[target_point_coords]
 
     def _get_target_point(self, nearby_points_coords: list, shift: int = 0) -> Tuple:
@@ -125,7 +124,7 @@ class UAV:
         return existing_points
 
     def paint_weights_map(self) -> None:
-        print(f"weights map for uav with id {self.id_}")
+        print(f"weights map for uav with id {self.id}")
         for i in range(self.uav_world.world_size - 1, -1, -1):
             for j in range(self.uav_world.world_size):
                 if self.uav_world.points[(j, i)].id == ((self.uav_world.world_size ** 2) - 1) / 2:
@@ -144,11 +143,101 @@ class UAV:
                 if j == self.uav_world.world_size - 1:
                     print("\n")
 
-    def move_to_direction(self, direction: str) -> tuple[int, int]:
-        if
-
-
     def get_target_point_localization(self):
-        if self.cur_point.c != 0 and self.spec_flag == 0:
-            direction = self.anemometer_data
-            self.target_point = self.uav_world.points[self.move_to_direction(direction)]
+        """функция для выбора следующей точки движения по алгоритму локализации в соответствующем режиме"""
+
+        # Если стадия локализации - движение против ветра:
+        if self.localize_stage == 'MOVE_AGAINST_WIND':
+            # Определение направления, в котором осуществляется движение
+            if self.anemometer_data == "UNKNOWN":
+                moving_direction: str = self._get_moving_direction()
+            else:
+                moving_direction: str = self.anemometer_data
+            # Выбор точки, которая соответствует выбранному направлению движения
+            self.target_point = self.uav_world.points[self._get_direction_point(moving_direction)]
+            print(f'uav{self.id} found plume and in LOCALIZE mode\nchosen {self.target_point} as target point')
+
+        # Если стадия локализации - возвращение к загрязнению:
+        if self.localize_stage == 'RETURN_TO_PLUME':
+            # Если это первый раз - необходимо определить с какой из сторон находится загрязнение
+            if self.to_plume_direction == "UNKNOWN":
+                self._get_to_plume_direction()
+                print(f"debug 1")
+            else:  # если же эта информация уже есть - движение в её сторону
+                self.target_point = self.uav_world.points[self._get_direction_point(self.to_plume_direction)]
+
+
+    def _get_to_plume_direction(self):
+        """
+        Функция для определения, в какую сторону смещаться дрону если он выйдет за пределы загрязнения
+        """
+        if self.return_stage == "UNKNOWN":
+            # Установка флага для перехода в режим поиска возвращения в загрязнение
+            self.return_stage = "STEP_1"  # шаг 1 - выбор одной из точек, либо правильной либо противоположной (избыток)
+            self.temp_moving_direction = self._get_to_plume_direction_step_1() # Получение одного из 2 направлений
+            self.target_point = self.uav_world.points[self._get_direction_point(self.temp_moving_direction)] # выбор точки
+
+            # Установка флага для перехода к следующему шагу STEP_2
+            self.return_stage = "STEP_2"  # шаг 2 - перемещение в одну из точек
+
+        elif self.return_stage == "STEP_2":
+            # Если первый выбор был неправильным - значит правильный второй, получаем направление движения
+            self.temp_moving_direction = self._get_to_plume_direction_step_2()
+            # Здесь придётся делать это через два шага, необходимо разработать функцию перемещающу дрон к точке
+            # с определенными координатами, пока этого нет - костыли и заглушки
+            self.target_point = self.uav_world.points[self._get_direction_point(self.temp_moving_direction)] # выбор точки
+            # Установка флага для перехода к следующему шагу STEP_3
+            self.return_stage = "STEP_3"  # шаг 3 - возвращение к загрязнению
+            # Теперь известно, что направление - противоположное
+            self.to_plume_direction = self._get_to_plume_direction_step_2()
+
+        elif self.return_stage == "STEP_3":
+            # Окончательное возвращение к загрязнению. Нам известно и направление и всё что нужно
+            self.target_point = self.uav_world.points[self._get_direction_point(self.temp_moving_direction)]
+
+    def _get_to_plume_direction_step_1(self) -> str:
+        """
+        ВНИМАНИЕ! ЗАГЛУШКА! ТРЕБУЕТСЯ РАЗРАБОТКА
+        Функция для определения одного из двух перпенидкулярных направлений, в которых можно продолжить движение
+        """
+        print(f"debug 3")
+        return "NORTH"
+
+    def _get_to_plume_direction_step_2(self) -> str:
+        """
+        ВНИМАНИЕ! ЗАГЛУШКА! ТРЕБУЕТСЯ РАЗРАБОТКА
+        Функция для определения одного из двух перпенидкулярных направлений, в которых можно продолжить движение
+        """
+        return "SOUTH"
+
+    def _get_moving_direction(self) -> str:
+        """
+        Функция для определения направления движения.
+        В данный момент необходимо выбрать направление противоположное направлению ветра
+        Т.к направление ветра "west" - означает, что ветер "дует с запада", значит направление движения
+        дрона должно быть именно на запад. Отсюда направление задается и равно направлению ветра из датчика
+        анемометра, что уже известно - но данная функция может быть изменена
+        """
+        return self.cur_point.wind
+
+    def _get_direction_point(self, direction: str) -> tuple[int, int]:
+        """
+        :param direction: принимает на вход необходимое направление движения
+        :return: возвращает координаты точки по заданному направлению
+        """
+        if direction == 'EAST':
+            return self.cur_point.x + 1, self.cur_point.y
+        elif direction == 'WEST':
+            return self.cur_point.x - 1, self.cur_point.y
+        elif direction == 'NORTH':
+            return self.cur_point.x, self.cur_point.y + 1
+        elif direction == 'SOUTH':
+            return self.cur_point.x, self.cur_point.y - 1
+        elif direction == 'NORTH_EAST':
+            return self.cur_point.x + 1, self.cur_point.y + 1
+        elif direction == 'NORTH_WEST':
+            return self.cur_point.x - 1, self.cur_point.y + 1
+        elif direction == 'SOUTH_WEST':
+            return self.cur_point.x - 1, self.cur_point.y - 1
+        elif direction == 'SOUTH_EAST':
+            return self.cur_point.x + 1, self.cur_point.y - 1

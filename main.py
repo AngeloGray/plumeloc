@@ -7,12 +7,12 @@ from src.objects import UAV
 from src.utils.data_visualisation import mpl_paint_weights_map
 
 # Задаём количество дронов и их начальные позиции
-number_of_uavs: int = 4
+number_of_uavs: int = 2
 UAV_INITIAL_POSITIONS = {
-    0: (13, 13),
-    1: (13, 39),
-    2: (39, 13),
-    3: (39, 39)
+    0: (0, 0),
+    1: (52, 0),
+    # 2: (52, 52),
+    # 3: (0, 52)
 }
 
 # Подготавливаем списки для карт территории для каждого дрона и внедряем их в соответствующие объекты дрона
@@ -29,11 +29,10 @@ for i in range(number_of_uavs):
     world_uav[i].world_paint()
     uav_id = i
     uav.append(UAV(
-        id_=uav_id,
+        id=uav_id,
         cur_point=world_uav[i].points[UAV_INITIAL_POSITIONS[uav_id]],
         uav_world=world_uav[i],
-        cur_mode='search',
-        spec_flag=0
+        cur_mode='SEARCH',
     ))
     uav[i].calculate_weights()  # Подсчет весов на карте мира каждого дрона
     uav[i].paint_weights_map()  # Отображение мира каждого дрона в консоли
@@ -56,56 +55,71 @@ world_global = World()
 world_global.test_world_create()
 world_global.world_paint()
 # world_global.plume_gen()
-mission_is_active: bool = True
 
 logs_file = open('painted_movings.txt', 'w')
-time_stamp: int = 0
-temp_time = time.time_ns()
-while mission_is_active:
-    for n in range(number_of_uavs):
-        uav[n].get_target_point()
 
-    for i in range(number_of_uavs):
-        for j in range(number_of_uavs):
-            if i != j:
-                if uav[i].target_point.id == uav[j].target_point.id:
-                    print(f'uav{i} and uav{j} has same target point')
-                    logs_file.write(f'uav{i} and uav{j} has same target point')
-                    for shift_value in range(8):
-                        uav[i].get_target_point(shift=shift_value)
-                        if uav[i].target_point.id != uav[j].target_point.id:
-                            break
+# # debug:
+# uav[0].cur_point = uav[0].uav_world.points[(22, 22)]
+# uav[1].cur_point = uav[1].uav_world.points[(30, 22)]
+# uav[2].cur_point = uav[2].uav_world.points[(30, 30)]
+# uav[3].cur_point = uav[3].uav_world.points[(22, 30)]
 
-    for n in range(number_of_uavs):
-        # uav[n].measure_plume(world_global.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))])
-        # logs_file.write(f"uav with id {n} measured c = {uav[n].cur_point.c} in Point ({uav[n].cur_point.x}, {uav[n].cur_point.y})\n")
-        uav[n].move_to(uav[n].target_point)
-        logs_file.write(
-            f"uav with id {n} moved to Point ({uav[n].cur_point.x}, {uav[n].cur_point.y})\n")
-        uav[n].measure_plume(world_global.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))])
-        logs_file.write(
-        f"uav with id {n} measured c = {uav[n].cur_point.c} in Point ({uav[n].cur_point.x}, {uav[n].cur_point.y})\n")
-        if uav[n].cur_point.c == 1.0:
-            mission_is_active = False
-        else:
-            uav[n].cur_point.weight = n
-            uav[n].uav_world.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))].weight = n
-        uav[n].paint_weights_map()
-        if (n + 1) % number_of_uavs == 0:
-            print(f'creating image for timestamp t = {time_stamp}, Задержка: {(time.time_ns() - temp_time)/(10**9)}')
-            mpl_paint_weights_map(uav[n], time_stamp, n)
-            temp_time = time.time_ns()
-        print(f'\niter {time_stamp}  for uav id{n} complete\n- - - - - - - - - - - - - - - - - - - - - - -')
-    time_stamp += 1
+# time_stamp: int = 0
+# temp_time = time.time_ns()
+# mission_is_active: bool = True
+
+# while mission_is_active:
+#
+#     for n in range(number_of_uavs):
+#         uav[n].get_target_point()
+#
+#     for i in range(number_of_uavs):
+#         for j in range(number_of_uavs):
+#             if i != j:
+#                 if uav[i].target_point.id == uav[j].target_point.id:
+#                     print(f'uav{i} and uav{j} has same target point')
+#                     logs_file.write(f'uav{i} and uav{j} has same target point')
+#                     for shift_value in range(8):
+#                         uav[i].get_target_point(shift=shift_value)
+#                         if uav[i].target_point.id != uav[j].target_point.id:
+#                             break
+#
+#     for n in range(number_of_uavs):
+#         # uav[n].measure_plume(world_global.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))])
+#         # logs_file.write(f"uav with id {n} measured c = {uav[n].cur_point.c} in Point ({uav[n].cur_point.x}, {uav[n].cur_point.y})\n")
+#         uav[n].move_to(uav[n].target_point)
+#         logs_file.write(
+#             f"uav with id {n} moved to Point ({uav[n].cur_point.x}, {uav[n].cur_point.y})\n")
+#         uav[n].measure_plume(world_global.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))])
+#         logs_file.write(
+#         f"uav with id {n} measured c = {uav[n].cur_point.c} in Point ({uav[n].cur_point.x}, {uav[n].cur_point.y})\n")
+#         if uav[n].cur_point.c == 1.0:
+#             mission_is_active = False
+#         else:
+#             uav[n].cur_point.weight = n
+#             uav[n].uav_world.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))].weight = n
+#         uav[n].paint_weights_map()
+#         if (n + 1) % number_of_uavs == 0:
+#             print(f'creating image for timestamp t = {time_stamp}, Задержка: {(time.time_ns() - temp_time)/(10**9)}')
+#             mpl_paint_weights_map(uav[n], time_stamp, n)
+#             temp_time = time.time_ns()
+#         print(f'\niter {time_stamp}  for uav id{n} complete\n- - - - - - - - - - - - - - - - - - - - - - -')
+#     time_stamp += 1
 
 # Модифицированный цикл прохождения по алгоритму с добавлением режима локализации
-mission_is_active: bool = False
+mission_is_active: bool = True
 time_stamp: int = 0
+temp_time = time.time_ns()
+
 while mission_is_active:
+    logs_file.write(f"- - - - - - - \nMISSION is at time stamp t = {time_stamp } iteration started\n- - - - - - - \n")
+    # Выбор следующей целевой точки, в которую происходит движение исходя из режима в котором находится дрон
     for n in range(number_of_uavs):
-        if uav[n].cur_mode == 'search':
-            uav[n].get_target_point()
-        if uav[n].cur_mode == 'localize':
+        if uav[n].cur_mode == 'SEARCH':
+            print(f"uav{n} getting target point in SEARCH mode")
+            uav[n].get_target_point_searching()
+        elif uav[n].cur_mode == 'LOCALIZE':
+            print(f"uav{n} getting target point in LOCALIZE mode")
             uav[n].get_target_point_localization()
 
     # Условие для недопуска одновременного движения двух дронов на одну и ту же координату (на доработке)
@@ -120,6 +134,106 @@ while mission_is_active:
     #                     if uav[i].target_point.id != uav[j].target_point.id:
     #                         break
 
+    # Для каждого из дронов:
+    for n in range(number_of_uavs):
+        # 1) передвижение на точку target_point
+        uav[n].move_to(uav[n].target_point)
+        logs_file.write(f"uav with id {n} moved to Point ({uav[n].cur_point.x}, {uav[n].cur_point.y})\n")
+
+    for n in range(number_of_uavs):
+        # 2) Измерение уровня концентрации ЗВ в точке, на который переместился дрон
+        uav[n].measure_plume(world_global.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))])
+        logs_file.write(
+            f"uav with id {n} measured c = {uav[n].cur_point.c} in Point ({uav[n].cur_point.x},{uav[n].cur_point.y})\n")
+
+    for n in range(number_of_uavs):
+        # 3) Проверка отличия загрязнения от нулевого:
+
+        # Если обнаружен источник - конец миссии
+        if uav[n].cur_point.c == 1.0:
+            logs_file.write(f"uav with id {n} found the SOURCE, at ({uav[n].cur_point.x},{uav[n].cur_point.y})\n"
+                            f"----------------------\nMISSION COMPLETED\n---------------------\n")
+            mission_is_active = False
+            break
+
+        # Если обнаружено загрязнение при режиме поиска - переход в режим локализации
+        elif uav[n].cur_point.c != 0 and uav[n].cur_mode == 'SEARCH':
+            # Установка режима локализации
+            uav[n].cur_mode = 'LOCALIZE'
+            logs_file.write(f"uav with id {n} switched mode to 'LOCALIZE'")
+
+            # Измерение направления ветра
+            uav[n].measure_wind_direction(world_global.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))])
+            logs_file.write(f"uav with id {n} measured wind at Point ({uav[n].cur_point.x},{uav[n].cur_point.y})\n")
+
+            # Установка стадии локализации "движение по направлению ветра"
+            uav[n].localize_stage = "MOVE_AGAINST_WIND"
+
+        # Если обнаружено загрязнение при режиме локализации - продолжение движения против ветра
+        elif uav[n].cur_point.c != 0 and uav[n].cur_mode == 'LOCALIZE':
+            logs_file.write(f"uav with id {n} continuing localizing,"
+                            f" passed Point ({uav[n].cur_point.x},{uav[n].cur_point.y})\n")
+
+        # Если загрязнения в режиме локализации не обнаружено - стадия возвращения к загрязнению
+        elif uav[n].cur_point.c == 0 and uav[n].cur_mode == 'LOCALIZE':
+            # Выход за загрязнение - необходимо вернуться к загрязнению
+            uav[n].localize_stage = "RETURN_TO_PLUME"
+            logs_file.write(f"uav with id {n} switched mode to 'RETURN_TO_PLUME', {uav[n].return_stage}\n")
+
+        # Если загрязнение в режиме возвращения обнаруживается - выбрано правильное из двух направлений, возвращение
+        # в режим движения против ветра
+        elif uav[n].cur_point.c != 0 and uav[n].cur_mode == 'RETURN_TO_PLUME':
+            uav[n].cur_mode = 'LOCALIZE'
+            if uav[n].return_stage != 'DIR_FOUND':
+                uav[n].return_stage = 'DIR_FOUND'
+                uav[n].to_plume_direction = uav[n].temp_moving_direction
+            logs_file.write(f"uav with id {n} continuing localizing,"
+                            f" passed Point ({uav[n].cur_point.x},{uav[n].cur_point.y})\n")
+
+        # Если загрязнения в режиме возвращения не обнаружится - выбрано неправильное из двух направлений
+        elif uav[n].cur_point.c == 0 and uav[n].cur_mode == 'RETURN_TO_PLUME':
+            if uav[n].return_stage == "STEP_2":
+                logs_file.write(f"uav with id {n} continuing returning to plume,"
+                                f" direction {uav[n].temp_moving_direction} not valid - choosing against it)\n")
+            else:
+                logs_file.write(f"uav with id {n} continuing returning to plume,"
+                                f"valid direction is {uav[n].temp_moving_direction}\n")
+
+
+        # Если загрязнения не обнаружено в режиме поиска - зануление текущего веса, переход к следующей точке
+        elif uav[n].cur_point.c == 0 and uav[n].cur_mode == 'SEARCH':
+            # Зануление веса текущей координаты как у дронов
+            uav[n].cur_point.weight = n
+            # так и в общем графе
+            uav[n].uav_world.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))].weight = n
+            logs_file.write(f"uav with id {n} continuing SEARCHing\n")
+
+        # Вывести в консоль локальную карту графа
+        if (n + 1) % number_of_uavs == 0:
+            # uav[n].paint_weights_map()
+            mpl_paint_weights_map(uav[n], time_stamp, n, world_global)
+            print(
+                f'creating image for timestamp t = {time_stamp}, Задержка: {(time.time_ns() - temp_time) / (10 ** 9)}')
+            temp_time = time.time_ns()
+        print(f'\niter {time_stamp}  for uav id{n} complete\n- - - - - - - - - - - - - - - - - - - - - - -')
+    time_stamp += 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -130,7 +244,7 @@ while mission_is_active:
 #
 # first_uav_id = 0
 # first_uav = UAV(
-#     id_=first_uav_id,
+#     id=first_uav_id,
 #     cur_point=first_world_uav.points[UAV_INITIAL_POSITIONS[first_uav_id]],
 #     uav_world=first_world_uav
 #     # publisher_obj=ros_commands.initialize_publisher(first_uav_id)
@@ -142,7 +256,7 @@ while mission_is_active:
 # second_world_uav.uav_world_create()
 # second_uav_id = 1
 # second_uav = UAV(
-#     id_=second_uav_id,
+#     id=second_uav_id,
 #     cur_point=second_world_uav.points[UAV_INITIAL_POSITIONS[second_uav_id]],
 #     uav_world=second_world_uav
 #     # publisher_obj=ros_commands.initialize_publisher(first_uav_id)
@@ -162,7 +276,7 @@ while mission_is_active:
 # world_global.world_create()
 # world_global.plume_gen()
 #
-# print(f"uav with id {first_uav.id_} is at position: x = {first_uav.cur_point.x}, y = {first_uav.cur_point.y} ")
+# print(f"uav with id {first_uav.id} is at position: x = {first_uav.cur_point.x}, y = {first_uav.cur_point.y} ")
 # first_uav.measure_plume(world_global.points[(int(first_uav.cur_point.x), int(first_uav.cur_point.y))])
 # first_uav.mark_point()
 #
