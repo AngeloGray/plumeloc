@@ -7,12 +7,12 @@ from src.objects import UAV
 from src.utils.data_visualisation import mpl_paint_weights_map
 
 # Задаём количество дронов и их начальные позиции
-number_of_uavs: int = 2
+number_of_uavs: int = 4
 UAV_INITIAL_POSITIONS = {
     0: (0, 0),
     1: (52, 0),
-    # 2: (52, 52),
-    # 3: (0, 52)
+    2: (52, 52),
+    3: (0, 52)
 }
 
 # Подготавливаем списки для карт территории для каждого дрона и внедряем их в соответствующие объекты дрона
@@ -153,6 +153,7 @@ while mission_is_active:
         if uav[n].cur_point.c == 1.0:
             logs_file.write(f"uav with id {n} found the SOURCE, at ({uav[n].cur_point.x},{uav[n].cur_point.y})\n"
                             f"----------------------\nMISSION COMPLETED\n---------------------\n")
+            mpl_paint_weights_map(uav[n], time_stamp, n, world_global, "uav")
             mission_is_active = False
             break
 
@@ -207,15 +208,13 @@ while mission_is_active:
             # так и в общем графе
             uav[n].uav_world.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))].weight = n
             logs_file.write(f"uav with id {n} continuing SEARCHing\n")
-
-        # Вывести в консоль локальную карту графа
-        if (n + 1) % number_of_uavs == 0:
             # uav[n].paint_weights_map()
-            mpl_paint_weights_map(uav[n], time_stamp, n, world_global)
-            print(
-                f'creating image for timestamp t = {time_stamp}, Задержка: {(time.time_ns() - temp_time) / (10 ** 9)}')
-            temp_time = time.time_ns()
+
         print(f'\niter {time_stamp}  for uav id{n} complete\n- - - - - - - - - - - - - - - - - - - - - - -')
+    mpl_paint_weights_map(uav, time_stamp, n, world_global, "world")
+    print(
+        f'creating image for timestamp t = {time_stamp}, Задержка: {(time.time_ns() - temp_time) / (10 ** 9)}')
+    temp_time = time.time_ns()
     time_stamp += 1
 
 

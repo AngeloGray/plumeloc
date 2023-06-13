@@ -7,7 +7,7 @@ from src.world.territory import World
 from src.config import TERRITORY_SIZE
 
 
-def mpl_paint_weights_map(uav: UAV, time_iter: int, uav_id: int, world: World) -> None:
+def mpl_paint_weights_map(uav: List[UAV], time_iter: int, uav_id: int, world: World, mode: str) -> None:
     plume_boxes: List = []
     # Формируем трёхмерный массив точек, матрицу весов:
     array_2d = np.zeros((TERRITORY_SIZE, TERRITORY_SIZE))
@@ -15,7 +15,7 @@ def mpl_paint_weights_map(uav: UAV, time_iter: int, uav_id: int, world: World) -
         for i in range(TERRITORY_SIZE):
             if world.points[(i, j)].c != 0:
                 plume_boxes.append((i, j))
-            array_2d[(-j+52)][i] = uav.uav_world.points[(i, j)].weight
+            array_2d[(-j+52)][i] = uav[3].uav_world.points[(i, j)].weight
 
 
 
@@ -49,6 +49,11 @@ def mpl_paint_weights_map(uav: UAV, time_iter: int, uav_id: int, world: World) -
             else:
                 text = ax.text(j, i, round(array_2d[i][j]),
                                ha="center", va="center", color="k", fontsize='xx-small', fontweight='bold')
+
+    for n in range(len(uav)):
+        text = ax.text(uav[n].cur_point.x, uav[n].cur_point.y, round(array_2d[uav[n].cur_point.y][uav[n].cur_point.x]),
+                       ha="center", va="center", color="black", backgroundcolor='purple',
+                       fontsize='xx-small', fontweight='extra bold')
 
     ax.set_title(f"Карта весов для дрона (id = {uav_id}). Итерация t = {time_iter}. Выбирается наибольший слева mode = 0")
     fig.tight_layout()
