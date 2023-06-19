@@ -9,9 +9,9 @@ from src.utils.data_visualisation import mpl_paint_weights_map
 number_of_uavs: int = 4
 UAV_INITIAL_POSITIONS = {
     0: (0, 0),
-    1: (52, 0),
-    2: (52, 52),
-    3: (0, 52)
+    1: (100, 0),
+    2: (100, 100),
+    3: (0, 100)
 }
 
 # Подготавливаем списки для карт территории для каждого дрона и внедряем их в соответствующие объекты дрона
@@ -25,7 +25,6 @@ uav: List[UAV] = []
 for i in range(number_of_uavs):
     world_uav.append(World())
     world_uav[i].uav_world_create()
-    world_uav[i].world_paint()
     uav_id = i
     uav.append(UAV(
         id=uav_id,
@@ -52,7 +51,8 @@ for i in range(number_of_uavs):
 world_global = World()
 # world_global.world_create()
 world_global.test_world_create()
-world_global.world_paint()
+test_time_stamp = 1000
+mpl_paint_weights_map(uav, test_time_stamp, world_global)
 # world_global.plume_gen()
 
 logs_file = open('painted_movings.txt', 'w')

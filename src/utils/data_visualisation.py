@@ -15,7 +15,7 @@ def mpl_paint_weights_map(uav: List[UAV], time_iter: int, world: World, finish_f
         for i in range(TERRITORY_SIZE):
             if world.points[(i, j)].c != 0:
                 plume_boxes.append((i, j))
-            array_2d[(-j+52)][i] = uav[3].uav_world.points[(i, j)].weight
+            array_2d[(-j+(TERRITORY_SIZE-1))][i] = uav[3].uav_world.points[(i, j)].weight
 
 
 
@@ -38,17 +38,30 @@ def mpl_paint_weights_map(uav: List[UAV], time_iter: int, world: World, finish_f
     # Loop over data dimensions and create text annotations.
     for i in range(TERRITORY_SIZE):
         for j in range(TERRITORY_SIZE):
-            if (j, i) == (26, 26):
-                text = ax.text(j, i, round(array_2d[i][j]),
+            if (j, i) == ((TERRITORY_SIZE-1)/2, (TERRITORY_SIZE-1)/2):
+                text = ax.text(j, i, round(array_2d[i][j])//10000,
                                ha="center", va="center", color="yellow", backgroundcolor='red',
                                fontsize='xx-small', fontweight='extra bold')
             elif (j, i) in plume_boxes:
-                text = ax.text(j, i, round(array_2d[i][j]),
-                               ha="center", va="center", color="k", backgroundcolor='red',
-                               fontsize='xx-small', fontweight='bold')
+                if world.points[(j, i)].c == 0.75:
+                    text = ax.text(j, i, world.points[(j, i)].c,
+                                   ha="center", va="center", color="k", backgroundcolor='yellow',
+                                   fontsize='xx-small', fontweight='bold')
+                elif world.points[(j, i)].c == 0.5:
+                    text = ax.text(j, i, world.points[(j, i)].c,
+                                   ha="center", va="center", color="k", backgroundcolor='orange',
+                                   fontsize='xx-small', fontweight='bold')
+                elif world.points[(j, i)].c == 0.25:
+                    text = ax.text(j, i, world.points[(j, i)].c,
+                                   ha="center", va="center", color="k", backgroundcolor='red',
+                                   fontsize='xx-small', fontweight='bold')
+                elif world.points[(j, i)].c == 0.1:
+                    text = ax.text(j, i, world.points[(j, i)].c,
+                                   ha="center", va="center", color="k", backgroundcolor='brown',
+                                   fontsize='xx-small', fontweight='bold')
             else:
-                text = ax.text(j, i, round(array_2d[i][j]),
-                               ha="center", va="center", color="k", fontsize='xx-small', fontweight='bold')
+                text = ax.text(j, i, round(array_2d[i][j])//10000,
+                               ha="center", va="center", color="k", fontsize=5, fontweight='bold')
 
     for n in range(len(uav)):
         text = ax.text(uav[n].cur_point.x, (TERRITORY_SIZE - 1) - uav[n].cur_point.y, round(array_2d[uav[n].cur_point.x][uav[n].cur_point.y]),

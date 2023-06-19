@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Tuple
 from math import sqrt
 
-from src.config import TERRITORY_SIZE, PLUME_SIZE, WIND_DIRECTION
+from src.config import TERRITORY_SIZE, PLUME_SIZE, WIND_DIRECTION, MASHTAB_COEF
 
 
 @dataclass
@@ -69,13 +69,14 @@ class World:
                 plume_value = round(plume_value, 1)
 
     def _plume_gen_dir_west(self):
-        xc = yc = int ((self.world_size - 1) / 2)
-        lij = 4 # гиперпараметр
+        Ms = MASHTAB_COEF
+        xc = yc = int((self.world_size - 1) / 2)
+        lij = 4 * Ms  # гиперпараметр
         lij_half = int(lij / 2)
         lijk = int(lij / 2)  # гиперпараметр lijk = 2
         lijk_half = int(lijk / 2)
-        li0 = lij + lijk # гиперпараметр li0 = 6, уменьшается на 2 каждый раз
-        Lli = 11 # гиперпараметр для изначального лепестка Ll1 = 11, увеличивается на 4 каждый раз
+        li0 = lij + lijk  # гиперпараметр li0 = 6, уменьшается на 2 каждый раз
+        Lli = li0 + lij + 1  # гиперпараметр для изначального лепестка Ll1 = 11, увеличивается на 4 каждый раз
 
         for leaf_id in range(0, 5):
             if leaf_id == 0:
@@ -87,94 +88,94 @@ class World:
                         for m in range(1, Lli + 1): # от 1 до 11
                             self.points[(xc + m, yc)].c = (1 - 0.25 * leaf_id)
                     if i == 1:
-                        for m in range(li0 + (lij * (i - 1)) + lijk_half, li0 + (i * lij) + 1):  # от 7 до 10 сверху и снизу
+                        for m in range(li0 + (lij * (i - 1)) + 1, li0 + (i * lij) + 1):  # от 7 до 10 сверху и снизу
                             self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
                             self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
 
             if leaf_id == 2:
-                Lli += 4 # Изменение в соответствии с моделью
-                li0 -= 2  # Изменение в соответствии с моделью
+                Lli += lij # Изменение в соответствии с моделью
+                li0 -= lijk  # Изменение в соответствии с моделью
                 for i in range(0, leaf_id + 1):
                     if i == 0:
                         for m in range(Lli - lij + 1, Lli + 1): # от 12 до 15 - середина
                             self.points[(xc + m, yc)].c = (1 - 0.25 * leaf_id)
                     if i == 1:
                         # от 5,6 & 11,12,13,14 для верхней и нижней части лепестка
-                        for m in range(li0 + lijk_half, li0 + lij_half + 1):  # 5, 6
+                        for m in range(li0 + 1, li0 + lij_half + 1):  # 5, 6
                             self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
                             self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
-                        for m in range(Lli - lij, (Lli - lijk_half) + 1):  # 11, 12, 13, 14
+                        for m in range(Lli - lij, (Lli - 1) + 1):  # 11, 12, 13, 14
                             self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
                             self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
                     if i == 2:
-                        for m in range(li0 + (lij * (i - 1)) + lijk_half, li0 + (i * lij) + 1):  # от 9 до 12
+                        for m in range(li0 + (lij * (i - 1)) + 1, li0 + (i * lij) + 1):  # от 9 до 12
                             self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
                             self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
 
             if leaf_id == 3:
-                Lli += 4  # Изменение в соответствии с моделью
-                li0 -= 2  # Изменение в соответствии с моделью
+                Lli += lij  # Изменение в соответствии с моделью
+                li0 -= lijk  # Изменение в соответствии с моделью
                 for i in range(0, leaf_id + 1):
                     if i == 0:
                         for m in range(Lli - lij + 1, Lli + 1):  # от 16 до 19 - середина
                             self.points[(xc + m, yc)].c = (1 - 0.25 * leaf_id)
                     if i == 1:
                         # от 3,4 & 15,16,17,18 для верхней и нижней части лепестка
-                        for m in range(li0 + (lij * (i - 1)) + lijk_half, li0 + (lij * (i - 1)) + lij_half + 1):  # 3, 4
+                        for m in range(li0 + (lij * (i - 1)) + 1, li0 + (lij * (i - 1)) + lij_half + 1):  # 3, 4
                             self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
                             self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
-                        for m in range(Lli - lij - lijk * (i - 1), (Lli - lijk_half - lijk * (i - 1)) + 1):  #15, 16, 17, 18
+                        for m in range(Lli - lij - lijk * (i - 1), (Lli - 1 - 1 * (i - 1)) + 1):  #15, 16, 17, 18
                             self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
                             self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
                     if i == 2:
                         # от 7, 8 & 13, 14, 15 ,16 для верхней и нижней части лепестка
-                        for m in range(li0 + (lij * (i - 1)) + lijk_half, li0 + (lij * (i - 1)) + lij_half + 1):  # 7, 8
+                        for m in range(li0 + (lij * (i - 1)) + 1, li0 + (lij * (i - 1)) + lij_half + 1):  # 7, 8
                             self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
                             self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
-                        for m in range(Lli - lij - lijk * (i - 1), (Lli - lijk_half - lijk * (i - 1)) + 1):  # 13, 14, 15, 16
+                        for m in range(Lli - lij - lijk * (i - 1), (Lli - 1 - lijk * (i - 1)) + 1):  # 13, 14, 15, 16
                             self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
                             self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
                     if i == 3:
-                        for m in range(li0 + (lij * (i - 1)) + lijk_half, li0 + (i * lij) + 1):  # от 11 до 14
+                        for m in range(li0 + (lij * (i - 1)) + 1, li0 + (i * lij) + 1):  # от 11 до 14
                             self.points[(xc + m, yc + i)].c = (1 - 0.25 * leaf_id)
                             self.points[(xc + m, yc - i)].c = (1 - 0.25 * leaf_id)
 
             if leaf_id == 4:
-                Lli += 4  # Изменение в соответствии с моделью
-                li0 -= 2  # Изменение в соответствии с моделью
+                Lli += lij  # Изменение в соответствии с моделью
+                li0 -= lijk  # Изменение в соответствии с моделью
                 for i in range(0, leaf_id + 1):
                     if i == 0:
                         for m in range(Lli - lij + 1, Lli + 1):  # от 20 до 23 - середина
                             self.points[(xc + m, yc)].c = 0.1
                     if i == 1:
                         # от 1,2 & 19, 20, 21, 22 для верхней и нижней части лепестка
-                        for m in range(li0 + (lij * (i - 1)) + lijk_half, li0 + (lij * (i - 1)) + lij_half + 1):  #1 2
+                        for m in range(li0 + (lij * (i - 1)) + 1, li0 + (lij * (i - 1)) + lij_half + 1):  #1 2
                             self.points[(xc + m, yc + i)].c = 0.1
                             self.points[(xc + m, yc - i)].c = 0.1
                         for m in range(Lli - lij - lijk * (i - 1),
-                                       (Lli - lijk_half - lijk * (i - 1)) + 1):  # 19, 20, 21, 22
+                                       (Lli - 1 - lijk * (i - 1)) + 1):  # 19, 20, 21, 22
                             self.points[(xc + m, yc + i)].c = 0.1
                             self.points[(xc + m, yc - i)].c = 0.1
                     if i == 2:
                         # от 5, 6 & 17, 18, 19, 20 для верхней и нижней части лепестка
-                        for m in range(li0 + (lij * (i - 1)) + lijk_half, li0 + (lij * (i - 1)) + lij_half + 1):  # 5, 6
+                        for m in range(li0 + (lij * (i - 1)) + 1, li0 + (lij * (i - 1)) + lij_half + 1):  # 5, 6
                             self.points[(xc + m, yc + i)].c = 0.1
                             self.points[(xc + m, yc - i)].c = 0.1
                         for m in range(Lli - lij - lijk * (i - 1),
-                                       (Lli - lijk_half - lijk * (i - 1)) + 1):  # 17, 18, 19, 20
+                                       (Lli - 1 - lijk * (i - 1)) + 1):  # 17, 18, 19, 20
                             self.points[(xc + m, yc + i)].c = 0.1
                             self.points[(xc + m, yc - i)].c = 0.1
                     if i == 3:
                         # от 9, 10 & 15, 16, 17, 18 для верхней и нижней части лепестка
-                        for m in range(li0 + (lij * (i - 1)) + lijk_half, li0 + (lij * (i - 1)) + lij_half + 1):  # 9,10
+                        for m in range(li0 + (lij * (i - 1)) + 1, li0 + (lij * (i - 1)) + lij_half + 1):  # 9,10
                             self.points[(xc + m, yc + i)].c = 0.1
                             self.points[(xc + m, yc - i)].c = 0.1
                         for m in range(Lli - lij - lijk * (i - 1),
-                                       (Lli - lijk_half - lijk * (i - 1)) + 1):  # 15, 16, 17, 18
+                                       (Lli - 1 - lijk * (i - 1)) + 1):  # 15, 16, 17, 18
                             self.points[(xc + m, yc + i)].c = 0.1
                             self.points[(xc + m, yc - i)].c = 0.1
                     if i == 4:
-                        for m in range(li0 + (lij * (i - 1)) + lijk_half, li0 + (i * lij) + 1):  # от 13 до 16
+                        for m in range(li0 + (lij * (i - 1)) + 1, li0 + (i * lij) + 1):  # от 13 до 16
                             self.points[(xc + m, yc + i)].c = 0.1
                             self.points[(xc + m, yc - i)].c = 0.1
 
@@ -299,7 +300,7 @@ class World:
     def test_world_create(self):
         self._set_coords()
         self._set_temp_coords()
-        self._plume_gen_dir_west()
+        self._plume_gen_dir_north()
         self.world_paint()
 
     def uav_world_create(self):

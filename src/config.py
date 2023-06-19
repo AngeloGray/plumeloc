@@ -6,6 +6,7 @@ world shaped with 21x21 size
 
 """
 
-TERRITORY_SIZE: int = 53
+TERRITORY_SIZE: int = 101
+MASHTAB_COEF: int = 1
 PLUME_SIZE: float = 5
 WIND_DIRECTION: str = "WEST"
