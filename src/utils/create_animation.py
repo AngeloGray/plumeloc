@@ -9,7 +9,7 @@ for file in Path("C:/Users/Admin/PycharmProjects/plumeloc/temp_images").iterdir(
         continue
     images.append(iio.imread(file))
     counter += 1
-    if counter > 50:
+    if counter > 60:
         part_num += 1
         iio.imwrite(f'animation part {part_num}.gif', images)
         images = list()

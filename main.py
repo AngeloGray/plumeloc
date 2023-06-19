@@ -1,5 +1,4 @@
 import time
-from time import sleep
 from typing import List, Dict, Tuple
 # from src.utils import ros_commands
 from src.world.territory import Point, World
@@ -123,16 +122,20 @@ while mission_is_active:
             uav[n].get_target_point_localization()
 
     # Условие для недопуска одновременного движения двух дронов на одну и ту же координату (на доработке)
-    # for i in range(number_of_uavs):
-    #     for j in range(number_of_uavs):
-    #         if i != j:
-    #             if uav[i].target_point.id == uav[j].target_point.id:
-    #                 print(f'uav{i} and uav{j} has same target point')
-    #                 logs_file.write(f'uav{i} and uav{j} has same target point')
-    #                 for shift_value in range(8):
-    #                     uav[i].get_target_point(shift=shift_value)
-    #                     if uav[i].target_point.id != uav[j].target_point.id:
-    #                         break
+    for i in range(number_of_uavs):
+        for j in range(number_of_uavs):
+            if i != j:
+                if uav[i].target_point.id == uav[j].target_point.id:
+                    print(f'uav{i} and uav{j} has same target point')
+                    logs_file.write(f'uav{i} and uav{j} has same target point')
+                    if uav[i].cur_mode == 'SEARCH':
+                        uav[i].target_point = uav[i].cur_point  # Дрон просто стоит на месте пока другой пройдет.
+                        logs_file.write(f'uav{i} waits at point {uav[i].cur_point}')
+                        break
+                    # for shift_value in range(8):
+                    #     uav[i].get_target_point(shift=shift_value)
+                    #     if uav[i].target_point.id != uav[j].target_point.id:
+                    #         break
 
     # Для каждого из дронов:
     for n in range(number_of_uavs):
@@ -153,12 +156,14 @@ while mission_is_active:
         if uav[n].cur_point.c == 1.0:
             logs_file.write(f"uav with id {n} found the SOURCE, at ({uav[n].cur_point.x},{uav[n].cur_point.y})\n"
                             f"----------------------\nMISSION COMPLETED\n---------------------\n")
-            mpl_paint_weights_map(uav[n], time_stamp, n, world_global, "uav")
+            uav[n].cur_point.weight = n
+            mpl_paint_weights_map(uav, time_stamp, world_global, finish_flag_uav_id=n)
             mission_is_active = False
             break
 
         # Если обнаружено загрязнение при режиме поиска - переход в режим локализации
         elif uav[n].cur_point.c != 0 and uav[n].cur_mode == 'SEARCH':
+            uav[n].cur_point.weight = n
             # Установка режима локализации
             uav[n].cur_mode = 'LOCALIZE'
             logs_file.write(f"uav with id {n} switched mode to 'LOCALIZE'")
@@ -172,11 +177,13 @@ while mission_is_active:
 
         # Если обнаружено загрязнение при режиме локализации - продолжение движения против ветра
         elif uav[n].cur_point.c != 0 and uav[n].cur_mode == 'LOCALIZE':
+            uav[n].cur_point.weight = n
             logs_file.write(f"uav with id {n} continuing localizing,"
                             f" passed Point ({uav[n].cur_point.x},{uav[n].cur_point.y})\n")
 
         # Если загрязнения в режиме локализации не обнаружено - стадия возвращения к загрязнению
         elif uav[n].cur_point.c == 0 and uav[n].cur_mode == 'LOCALIZE':
+            uav[n].cur_point.weight = n
             # Выход за загрязнение - необходимо вернуться к загрязнению
             uav[n].localize_stage = "RETURN_TO_PLUME"
             logs_file.write(f"uav with id {n} switched mode to 'RETURN_TO_PLUME', {uav[n].return_stage}\n")
@@ -184,6 +191,7 @@ while mission_is_active:
         # Если загрязнение в режиме возвращения обнаруживается - выбрано правильное из двух направлений, возвращение
         # в режим движения против ветра
         elif uav[n].cur_point.c != 0 and uav[n].cur_mode == 'RETURN_TO_PLUME':
+            uav[n].cur_point.weight = n
             uav[n].cur_mode = 'LOCALIZE'
             if uav[n].return_stage != 'DIR_FOUND':
                 uav[n].return_stage = 'DIR_FOUND'
@@ -193,6 +201,7 @@ while mission_is_active:
 
         # Если загрязнения в режиме возвращения не обнаружится - выбрано неправильное из двух направлений
         elif uav[n].cur_point.c == 0 and uav[n].cur_mode == 'RETURN_TO_PLUME':
+            uav[n].cur_point.weight = n
             if uav[n].return_stage == "STEP_2":
                 logs_file.write(f"uav with id {n} continuing returning to plume,"
                                 f" direction {uav[n].temp_moving_direction} not valid - choosing against it)\n")
@@ -211,7 +220,7 @@ while mission_is_active:
             # uav[n].paint_weights_map()
 
         print(f'\niter {time_stamp}  for uav id{n} complete\n- - - - - - - - - - - - - - - - - - - - - - -')
-    mpl_paint_weights_map(uav, time_stamp, n, world_global, "world")
+    mpl_paint_weights_map(uav, time_stamp, world_global)
     print(
         f'creating image for timestamp t = {time_stamp}, Задержка: {(time.time_ns() - temp_time) / (10 ** 9)}')
     temp_time = time.time_ns()

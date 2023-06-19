@@ -77,11 +77,11 @@ class UAV:
                     # self.uav_world.points[(j, i)].weight = max(abs(self.uav_world.points[(j, i)].x -self.cur_point.x),
                     #                                            abs(self.uav_world.points[(j, i)].y -self.cur_point.y))
                     # Новая модель подсчёта весов в зависимости от расстояния
-                    # self.uav_world.points[(j, i)].weight = (diff_max - diff_min) + (diff_min * sqrt(2))
-                    self.uav_world.points[(j, i)].weight = math.sqrt(
-                        (self.uav_world.points[(j, i)].x - self.cur_point.x) ** 2
-                        + (self.uav_world.points[(j, i)].y - self.cur_point.y) ** 2
-                    )
+                    self.uav_world.points[(j, i)].weight = (diff_max - diff_min) + (diff_min * sqrt(2))
+                    # self.uav_world.points[(j, i)].weight = math.sqrt(
+                    #     (self.uav_world.points[(j, i)].x - self.cur_point.x) ** 2
+                    #     + (self.uav_world.points[(j, i)].y - self.cur_point.y) ** 2
+                    # )
     def merge_weights(self, another_worlds: List[World]):
         """Функция для последовательного перемножения карт весов всех дронов"""
         for n in range(len(another_worlds)):

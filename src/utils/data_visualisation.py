@@ -7,7 +7,7 @@ from src.world.territory import World
 from src.config import TERRITORY_SIZE
 
 
-def mpl_paint_weights_map(uav: List[UAV], time_iter: int, uav_id: int, world: World, mode: str) -> None:
+def mpl_paint_weights_map(uav: List[UAV], time_iter: int, world: World, finish_flag_uav_id: int = None) -> None:
     plume_boxes: List = []
     # Формируем трёхмерный массив точек, матрицу весов:
     array_2d = np.zeros((TERRITORY_SIZE, TERRITORY_SIZE))
@@ -38,7 +38,7 @@ def mpl_paint_weights_map(uav: List[UAV], time_iter: int, uav_id: int, world: Wo
     # Loop over data dimensions and create text annotations.
     for i in range(TERRITORY_SIZE):
         for j in range(TERRITORY_SIZE):
-            if (i, j) == (26, 26):
+            if (j, i) == (26, 26):
                 text = ax.text(j, i, round(array_2d[i][j]),
                                ha="center", va="center", color="yellow", backgroundcolor='red',
                                fontsize='xx-small', fontweight='extra bold')
@@ -51,11 +51,16 @@ def mpl_paint_weights_map(uav: List[UAV], time_iter: int, uav_id: int, world: Wo
                                ha="center", va="center", color="k", fontsize='xx-small', fontweight='bold')
 
     for n in range(len(uav)):
-        text = ax.text(uav[n].cur_point.x, uav[n].cur_point.y, round(array_2d[uav[n].cur_point.y][uav[n].cur_point.x]),
+        text = ax.text(uav[n].cur_point.x, uav[n].cur_point.y, round(array_2d[uav[n].cur_point.x][uav[n].cur_point.y]),
                        ha="center", va="center", color="black", backgroundcolor='purple',
                        fontsize='xx-small', fontweight='extra bold')
-
-    ax.set_title(f"Карта весов для дрона (id = {uav_id}). Итерация t = {time_iter}. Выбирается наибольший слева mode = 0")
+    if finish_flag_uav_id:
+        ax.set_title(f"Карта весов для дрона (id = {finish_flag_uav_id}). "
+                     f"Итерация t = {time_iter}. Выбирается наибольший слева mode = 0")
+    else:
+        ax.set_title(
+            f"Карта весов для дрона (id = {len(uav)}). Итерация t = {time_iter}. "
+            f"Выбирается наибольший слева mode = 0")
     fig.tight_layout()
     #plt.show()
     fig.savefig(f'temp_images/figure{time.time_ns()}.png')
