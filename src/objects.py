@@ -28,6 +28,7 @@ class UAV:
     anemometer_data: str = "UNKNOWN"
     to_plume_direction: str = "UNKNOWN"
     target_point: Point = None
+    reach_point: Point = None
     publisher_obj: Any = None
     time_iterations: Dict[int, int] = field(default_factory=dict)
 
@@ -41,6 +42,60 @@ class UAV:
         #                       target_point.y)
         self.cur_point = target_point
         print(f"UAV with id {self.id} completed moving to {target_point}")
+
+    def get_target_point_reaching(self):
+        """
+        логика выбора следующей точки в режиме достижения какой-то из координат
+        :return:
+        """
+        self.move_to_reach_point()
+
+    def move_to_reach_point(self, reach_point: Point = None) -> None:
+        """
+        Функция для осуществления движения к точке с определенными координатами
+        """
+        # Проверка на нахождение в режиме движения к точке достижения
+        if self.cur_mode != 'REACH':
+            # Установка режима и точки, к которой необходимо добраться
+            self.reach_point = reach_point
+            self.cur_mode = 'REACH'
+        else:
+            coord_diff = (abs(self.reach_point.x - self.cur_point.x), abs(self.reach_point.y-self.cur_point.y))
+            if coord_diff[0] != 0 and coord_diff[1] != 0:
+                # moving diagonally first
+                self.target_point = self.uav_world.points[self._to_reach_point_direction()]
+            else:
+                self.target_point = self.uav_world.points[self._to_reach_point_direction()]
+            if self.target_point == self.reach_point:
+                self.cur_mode = 'SEARCH'
+
+    def _to_reach_point_direction(self) -> Tuple[int, int]:
+        """
+        Вспомогательная функция для того чтобы получить координаты, в какую сторону необходимо двигаться чтобы
+        достичь reach_point
+        """
+        diff_x = self.reach_point.x - self.cur_point.x
+        diff_y = self.reach_point.y - self.cur_point.y
+
+        if diff_x > 0:
+            if diff_y == 0:
+                return self._get_direction_point('EAST')
+            elif diff_y > 0:
+                return self._get_direction_point('NORTH_EAST')
+            else:
+                return self._get_direction_point('SOUTH_EAST')
+        elif diff_x < 0:
+            if diff_y == 0:
+                return self._get_direction_point('WEST')
+            elif diff_y > 0:
+                return self._get_direction_point('NORTH_WEST')
+            else:
+                return self._get_direction_point('SOUTH_WEST')
+        else:
+            return self._get_direction_point('NORTH') if diff_y > 0 else self._get_direction_point('SOUTH')
+
+
+
 
     def measure_plume(self, sensor_plume: Point) -> None:
         """

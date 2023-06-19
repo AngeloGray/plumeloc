@@ -51,7 +51,7 @@ def mpl_paint_weights_map(uav: List[UAV], time_iter: int, world: World, finish_f
                                ha="center", va="center", color="k", fontsize='xx-small', fontweight='bold')
 
     for n in range(len(uav)):
-        text = ax.text(uav[n].cur_point.x, uav[n].cur_point.y, round(array_2d[uav[n].cur_point.x][uav[n].cur_point.y]),
+        text = ax.text(uav[n].cur_point.x, (TERRITORY_SIZE - 1) - uav[n].cur_point.y, round(array_2d[uav[n].cur_point.x][uav[n].cur_point.y]),
                        ha="center", va="center", color="black", backgroundcolor='purple',
                        fontsize='xx-small', fontweight='extra bold')
     if finish_flag_uav_id:
@@ -101,32 +101,66 @@ def mpl_paint_weights_map(uav: List[UAV], time_iter: int, world: World, finish_f
 # plt.show()
 # print('paiting complete!')
 
-# vegetables = ["cucumber", "tomato", "lettuce"]
-# farmers = ["Farmer Joe", "Upland Bros.", "Smith Gardening"]
-#
-# harvest = np.array([[7, 8, 9],
-#                     [4, 5, 6],
-#                     [1, 2, 3]])
-#
-#
-# fig, ax = plt.subplots()
-# im = ax.imshow(harvest)
-#
-# # Show all ticks and label them with the respective list entries
-# ax.set_xticks(np.arange(len(farmers)), labels=farmers)
-# ax.set_yticks(np.arange(len(vegetables)), labels=vegetables)
-#
-# # Rotate the tick labels and set their alignment.
-# plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-#          rotation_mode="anchor")
-#
-# # Loop over data dimensions and create text annotations.
-# for i in range(len(vegetables)):
-#     for j in range(len(farmers)):
-#         text = ax.text(j, i, harvest[i, j],
-#                        ha="center", va="center", color="w")
-# text = ax.text(6, 6, harvest[0,0],
-#                        ha="center", va="center", color="black")
-# ax.set_title("Harvest of local farmers (in tons/year)")
-# fig.tight_layout()
-# plt.show()e
+
+def _test() -> None:
+    vegetables = ["cucumber", "tomato", "lettuce"]
+    farmers = ["Farmer Joe", "Upland Bros.", "Smith Gardening"]
+    """
+    Можно использовать функцию numpy.arange() для создания массива чисел от 1 до 100 и затем преобразовать его в матрицу размером 10 на 10 с помощью метода reshape():
+
+python
+import numpy as np
+
+arr = np.arange(1, 101).reshape(10, 10)
+print(arr)
+
+
+Результат:
+
+
+array([[ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10],
+       [11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+       [21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+       [31, 32, 33, 34, 35, 36, 37, 38, 39, 40],
+       [41, 42, 43, 44, 45, 46, 47, 48, 49, 50],
+       [51, 52, 53, 54, 55, 56, 57, 58, 59, 60],
+       [61, 62, 63, 64, 65, 66, 67, 68, 69, 70],
+       [71, 72, 73, 74, 75, 76, 77, 78, 79, 80],
+       [81, 82, 83, 84, 85, 86, 87, 88, 89, 90],
+       [91, 92, 93, 94, 95, 96, 97, 98, 99, 100]])
+    """
+    harvest = np.array([[ 1,  2,  3,  4,  5,  6,  7,  8,  9, 10],
+                       [11, 12, 13, 14, 15, 16, 17, 18, 19, 20],
+                       [21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+                       [31, 32, 33, 34, 35, 36, 37, 38, 39, 40],
+                       [41, 42, 43, 44, 45, 46, 47, 48, 49, 50],
+                       [51, 52, 53, 54, 55, 56, 57, 58, 59, 60],
+                       [61, 62, 63, 64, 65, 66, 67, 68, 69, 70],
+                       [71, 72, 73, 74, 75, 76, 77, 78, 79, 80],
+                       [81, 82, 83, 84, 85, 86, 87, 88, 89, 90],
+                       [91, 92, 93, 94, 95, 96, 97, 98, 99, 100]])
+
+
+    fig, ax = plt.subplots()
+    im = ax.imshow(harvest)
+
+    # Show all ticks and label them with the respective list entries
+    ax.set_xticks(np.arange(len(farmers)), labels=farmers)
+    ax.set_yticks(np.arange(len(vegetables)), labels=vegetables)
+
+    # Rotate the tick labels and set their alignment.
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+
+    # Loop over data dimensions and create text annotations.
+    for i in range(10):
+        for j in range(10):
+            text = ax.text(j, i, harvest[i, j],
+                           ha="center", va="center", color="w")
+    text = ax.text(0, 1, harvest[0, 1],
+                           ha="center", va="center", color="black", backgroundcolor='yellow')
+    ax.set_title("Harvest of local farmers (in tons/year)")
+    fig.tight_layout()
+    plt.show()
+
+_test()

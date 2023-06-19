@@ -107,6 +107,7 @@ logs_file = open('painted_movings.txt', 'w')
 
 # Модифицированный цикл прохождения по алгоритму с добавлением режима локализации
 mission_is_active: bool = True
+uav_found_plume: int = -1
 time_stamp: int = 0
 temp_time = time.time_ns()
 
@@ -120,6 +121,9 @@ while mission_is_active:
         elif uav[n].cur_mode == 'LOCALIZE':
             print(f"uav{n} getting target point in LOCALIZE mode")
             uav[n].get_target_point_localization()
+        elif uav[n].cur_mode == 'REACH':
+            print(f"uav{n} getting target point in REACH mode")
+            uav[n].get_target_point_reaching()
 
     # Условие для недопуска одновременного движения двух дронов на одну и ту же координату (на доработке)
     for i in range(number_of_uavs):
@@ -167,6 +171,28 @@ while mission_is_active:
             # Установка режима локализации
             uav[n].cur_mode = 'LOCALIZE'
             logs_file.write(f"uav with id {n} switched mode to 'LOCALIZE'")
+            # Измерение направления ветра
+            uav[n].measure_wind_direction(world_global.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))])
+            logs_file.write(f"uav with id {n} measured wind at Point ({uav[n].cur_point.x},{uav[n].cur_point.y})\n")
+
+            # Установка стадии локализации "движение по направлению ветра"
+            uav[n].localize_stage = "MOVE_AGAINST_WIND"
+            # с этого момента для других дронов местоположение данного дрона становится целевой точкой
+            # до тех пор пока они сами не настигнут загрязнение или сам дрон
+            # но обработка этого должна происходить только после того как каждый дрон обработает последнее движение
+            # поэтому - установка флага
+            if uav_found_plume == -1:
+                uav_found_plume = n  # флаг устанавливается лишь однажды и равен id дрона-обнаружителя
+                # если одоновременно несколько дронов нашли загрязнение - ведущим будет только один из них с
+                # меньшим id. Имеет смысл разработать механизм, где ведущим для каждого из дронов будет ближайший.
+
+
+        # Если обнаружено загрязнение при режиме достижения - переход в режим локализации
+        elif uav[n].cur_point.c != 0 and uav[n].cur_mode == 'REACH':
+            uav[n].cur_point.weight = n
+            # Установка режима локализации
+            uav[n].cur_mode = 'LOCALIZE'
+            logs_file.write(f"uav with id {n} switched mode to 'LOCALIZE'")
 
             # Измерение направления ветра
             uav[n].measure_wind_direction(world_global.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))])
@@ -174,6 +200,13 @@ while mission_is_active:
 
             # Установка стадии локализации "движение по направлению ветра"
             uav[n].localize_stage = "MOVE_AGAINST_WIND"
+
+        # Если не обнаружено загрязнение при режиме достижения - продолжение движения в целевую точку
+        elif uav[n].cur_point.c == 0 and uav[n].cur_mode == 'REACH':
+            uav[n].cur_point.weight = n
+            uav[n].reach_point = uav[uav_found_plume - number_of_uavs].cur_point
+            uav[n].move_to_reach_point()
+
 
         # Если обнаружено загрязнение при режиме локализации - продолжение движения против ветра
         elif uav[n].cur_point.c != 0 and uav[n].cur_mode == 'LOCALIZE':
@@ -220,6 +253,16 @@ while mission_is_active:
             # uav[n].paint_weights_map()
 
         print(f'\niter {time_stamp}  for uav id{n} complete\n- - - - - - - - - - - - - - - - - - - - - - -')
+
+    if 0 <= uav_found_plume < number_of_uavs:
+        uav_found_plume += number_of_uavs
+        for n in range(number_of_uavs):
+            if n != uav_found_plume and uav[n].cur_mode == 'SEARCH':
+                uav[n].cur_mode = 'REACH'
+                logs_file.write(f"uav with id {n} switched mode to 'REACH'")
+                uav[n].reach_point = uav[n].cur_point
+                logs_file.write(f"uav with id {n} gor reach_point - {uav[n].reach_point}")
+
     mpl_paint_weights_map(uav, time_stamp, world_global)
     print(
         f'creating image for timestamp t = {time_stamp}, Задержка: {(time.time_ns() - temp_time) / (10 ** 9)}')
