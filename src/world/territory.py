@@ -278,29 +278,19 @@ class World:
                 self.points[(j, i)].c = self.points_temp[(j, i)].c
 
     def plume_gen_directed(self):
-        wind_direction = self.wind_direction
-        if self.plume_location == "CENTRAL":
-            self._plume_gen_loc_central()
-        elif self.plume_location == "NORTH":
-            self._plume_gen_loc_north()
-        elif self.plume_location == "WEST":
-            self._plume_gen_loc_west()
-        elif self.plume_location == "EAST":
-            self._plume_gen_loc_east()
-        elif self.plume_location == "SOUTH":
-            self._plume_gen_loc_south()
-        elif self.plume_location == "CUSTOM":
-            self._plume_gen_loc_custom()
+        if WIND_DIRECTION == 'WEST':
+            self._plume_gen_dir_west()
+        elif WIND_DIRECTION == 'EAST':
+            self._plume_gen_dir_east()
+        elif WIND_DIRECTION == 'NORTH':
+            self._plume_gen_dir_north()
+        elif WIND_DIRECTION == 'SOUTH':
+            self._plume_gen_dir_south()
 
     def world_create(self):
         self._set_coords()
-        self.plume_gen()
-        # self.plume_gen_directed()
-
-    def test_world_create(self):
-        self._set_coords()
         self._set_temp_coords()
-        self._plume_gen_dir_north()
+        self.plume_gen_directed()
         self.world_paint()
 
     def uav_world_create(self):

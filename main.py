@@ -37,6 +37,7 @@ for i in range(number_of_uavs):
     #mpl_paint_weights_map(uav[i], time_iter=0, uav_id=0)
 
 
+# Если дронов - несколько их миры должны быть одинаковыми после того как все веса перемножатся:
 if number_of_uavs > 1:
     another_worlds: List[World] = []
     for n in range(1, number_of_uavs):
@@ -45,15 +46,17 @@ if number_of_uavs > 1:
     for n in range(1, number_of_uavs):
         uav[n].uav_world.points = uav[0].uav_world.points
 
+# Отображаем локальные карты территории каждго дрона и убеждаемся, что они одинаковые
 for i in range(number_of_uavs):
     uav[i].paint_weights_map()
 
+# СОздаем объект глобальной карты территории с априорными данными, которые недоступны дронам и которые им придется
+# исследовать во время работы алгоритма
 world_global = World()
-# world_global.world_create()
-world_global.test_world_create()
-test_time_stamp = 1000
-mpl_paint_weights_map(uav, test_time_stamp, world_global)
-# world_global.plume_gen()
+world_global.world_create()  # Создание глобальной карты
+
+# test_time_stamp = 1000
+# mpl_paint_weights_map(uav, test_time_stamp, world_global)
 
 logs_file = open('painted_movings.txt', 'w')
 

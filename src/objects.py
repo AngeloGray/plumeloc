@@ -32,6 +32,21 @@ class UAV:
     publisher_obj: Any = None
     time_iterations: Dict[int, int] = field(default_factory=dict)
 
+    uav_compass = {
+        'opposite': {
+            'WEST': 'EAST',
+            'EAST': 'WEST',
+            'NORTH': 'SOUTH',
+            'SOUTH': 'NORTH'
+        },
+        'perpendicular': {
+            'WEST': ('NORTH', 'SOUTH'),
+            'EAST': ('NORTH', 'SOUTH'),
+            'NORTH': ('EAST', 'WEST'),
+            'SOUTH': ('EAST', 'WEST'),
+        }
+    }
+
     def move_to(self, target_point: Point) -> None:
         """Moving to target_point"""
         print(f'UAV with id {self.id} moving to {target_point} from {self.cur_point}')
