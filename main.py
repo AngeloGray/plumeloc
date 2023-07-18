@@ -1,10 +1,11 @@
 import time
-from typing import List, Dict, Tuple
+from typing import List
 # from src.utils import ros_commands
-from src.world.territory import Point, World
+from src.world.territory import World
 from src.objects import UAV
 from src.utils.data_visualisation import mpl_paint_weights_map
-from src.config import TERRITORY_SIZE, PLUME_SIZE, MASHTAB_COEF, WIND_DIRECTION, PLUME_CUSTOM_COORDS
+from src.config import TERRITORY_SIZE, PLUME_SIZE, MASHTAB_COEF, WIND_DIRECTION, PLUME_CUSTOM_COORDS, NUM_OF_UAVS, \
+                       UAV_INITIAL_POSITIONS, INIT_TIME_STAMP
 
 
 def main():
@@ -12,13 +13,7 @@ def main():
     uniquefier: int = time.time_ns()
 
     # Задаём количество дронов и их начальные позиции
-    number_of_uavs: int = 4
-    UAV_INITIAL_POSITIONS = {
-        0: (0, 0),
-        1: (52, 0),
-        2: (0, 52),
-        3: (52, 52)
-    }
+    number_of_uavs: int = NUM_OF_UAVS
 
     # Инициализация файла с логами для отладки
     logs_file = open(f'logs/main_info_{uniquefier}.txt', 'w')
@@ -97,13 +92,15 @@ def main():
                                 break
         for n in range(number_of_uavs):
             # uav[n].measure_plume(world_global.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))])
-            # logs_file.write(f"uav with id {n} measured c = {uav[n].cur_point.c} in Point ({uav[n].cur_point.x}, {uav[n].cur_point.y})\n")
+            # logs_file.write(f"uav with id {n} measured c = {uav[n].cur_point.c} in Point ({uav[n].cur_point.x}, \
+            {uav[n].cur_point.y})\n")
             uav[n].move_to(uav[n].target_point)
             logs_file.write(
                 f"uav with id {n} moved to Point ({uav[n].cur_point.x}, {uav[n].cur_point.y})\n")
             uav[n].measure_plume(world_global.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))])
             logs_file.write(
-            f"uav with id {n} measured c = {uav[n].cur_point.c} in Point ({uav[n].cur_point.x}, {uav[n].cur_point.y})\n")
+            f"uav with id {n} measured c = {uav[n].cur_point.c} in Point ({uav[n].cur_point.x}, {uav[n].cur_point.y})\
+            \n")
             if uav[n].cur_point.c == 1.0:
                 mission_is_active = False
             else:
@@ -111,7 +108,7 @@ def main():
                 uav[n].uav_world.points[(int(uav[n].cur_point.x), int(uav[n].cur_point.y))].weight = n
             uav[n].paint_weights_map()
             if (n + 1) % number_of_uavs == 0:
-                print(f'creating image for timestamp t = {time_stamp}, Задержка: {(time.time_ns() - temp_time)/(10**9)}')
+                print(f'creating image for timestamp t = {time_stamp}, Задержка: {(time.time_ns() -temp_time)/(10**9)}')
                 mpl_paint_weights_map(uav[n], time_stamp, n)
                 temp_time = time.time_ns()
             print(f'\niter {time_stamp}  for uav id{n} complete\n- - - - - - - - - - - - - - - - - - - - - - -')
@@ -125,7 +122,7 @@ def main():
     temp_time = time.time_ns()  # переменная для измерения производительности выполнения алгоритма
 
     while mission_is_active:
-        logs_file.write(f"- - - - - - - \nMISSION is at time stamp t = {time_stamp } iteration started\n- - - - - - - \n")
+        logs_file.write(f"- - - - - - - \nMISSION is at time stamp t = {time_stamp } iteration started\n- - - - - - \n")
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Выбор следующей целевой точки, в которую происходит движение исходя из режима в котором находится дрон
         for n in range(number_of_uavs):
@@ -206,7 +203,6 @@ def main():
                     # если одоновременно несколько дронов нашли загрязнение - ведущим будет только один из них с
                     # меньшим id. Имеет смысл разработать механизм, где ведущим для каждого из дронов будет ближайший.
 
-
             # Если обнаружено загрязнение при режиме достижения - переход в режим локализации
             elif uav[n].cur_point.c != 0 and uav[n].cur_mode == 'REACH':
                 uav[n].cur_point.weight = n
@@ -227,15 +223,16 @@ def main():
                 uav[n].reach_point = uav[uav_found_plume - number_of_uavs].cur_point
                 uav[n].move_to_reach_point()
 
-
             # Если обнаружено загрязнение при режиме локализации - продолжение движения против ветра
-            elif uav[n].cur_point.c != 0 and uav[n].cur_mode == 'LOCALIZE' and uav[n].localize_stage == 'MOVE_AGAINST_WIND':
+            elif uav[n].cur_point.c != 0 and uav[n].cur_mode == 'LOCALIZE' and uav[n].localize_stage == \
+                    'MOVE_AGAINST_WIND':
                 uav[n].cur_point.weight = n
                 logs_file.write(f"uav with id {n} continuing localizing,"
                                 f" passed Point ({uav[n].cur_point.x},{uav[n].cur_point.y})\n")
 
             # Если загрязнения в режиме локализации не обнаружено - стадия возвращения к загрязнению
-            elif uav[n].cur_point.c == 0 and uav[n].cur_mode == 'LOCALIZE' and uav[n].localize_stage == 'MOVE_AGAINST_WIND':
+            elif uav[n].cur_point.c == 0 and uav[n].cur_mode == 'LOCALIZE' and uav[n].localize_stage == \
+                    'MOVE_AGAINST_WIND':
                 uav[n].cur_point.weight = n
                 # Выход за загрязнение - необходимо вернуться к загрязнению
                 uav[n].localize_stage = "RETURN_TO_PLUME"
@@ -243,7 +240,8 @@ def main():
 
             # Если загрязнение в режиме возвращения обнаруживается - выбрано правильное из двух направлений, возвращение
             # в режим движения против ветра
-            elif uav[n].cur_point.c != 0 and uav[n].cur_mode == 'LOCALIZE' and uav[n].localize_stage == 'RETURN_TO_PLUME':
+            elif uav[n].cur_point.c != 0 and uav[n].cur_mode == 'LOCALIZE' and uav[n].localize_stage ==\
+                    'RETURN_TO_PLUME':
                 uav[n].cur_point.weight = n
                 uav[n].localize_stage = 'MOVE_AGAINST_WIND'
                 if uav[n].return_stage != 'DIR_FOUND':
@@ -253,7 +251,8 @@ def main():
                                 f" passed Point ({uav[n].cur_point.x},{uav[n].cur_point.y})\n")
 
             # Если загрязнения в режиме возвращения не обнаружится - выбрано неправильное из двух направлений
-            elif uav[n].cur_point.c == 0 and uav[n].cur_mode == 'LOCALIZE' and uav[n].localize_stage == 'RETURN_TO_PLUME':
+            elif uav[n].cur_point.c == 0 and uav[n].cur_mode == 'LOCALIZE' and uav[n].localize_stage ==\
+                    'RETURN_TO_PLUME':
                 uav[n].cur_point.weight = n
                 if uav[n].return_stage == "STEP_2":
                     logs_file.write(f"uav with id {n} continuing returning to plume,"
@@ -261,7 +260,6 @@ def main():
                 else:
                     logs_file.write(f"uav with id {n} continuing returning to plume,"
                                     f"valid direction is {uav[n].temp_moving_direction}\n")
-
 
             # Если загрязнения не обнаружено в режиме поиска - зануление текущего веса, переход к следующей точке
             elif uav[n].cur_point.c == 0 and uav[n].cur_mode == 'SEARCH':
@@ -282,7 +280,7 @@ def main():
                     logs_file.write(f"uav with id {n} switched mode to 'REACH'\n")
                     uav[n].reach_point = uav[n].cur_point
                     logs_file.write(f"uav with id {n} gor reach_point - {uav[n].reach_point}\n")
-        if time_stamp > 15:
+        if time_stamp > INIT_TIME_STAMP:
             mpl_paint_weights_map(uav, time_stamp, world_global)
         print(
             f'creating image for timestamp t = {time_stamp}, Задержка: {(time.time_ns() - temp_time) / (10 ** 9)}')
@@ -292,26 +290,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # first_world_uav = World()
 # first_world_uav.uav_world_create()

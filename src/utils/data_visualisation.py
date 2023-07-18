@@ -16,7 +16,8 @@ def mpl_paint_weights_map(uav: List[UAV], time_iter: int, world: World, finish_f
             if world.points[(i, j)].c != 0:
                 plume_boxes.append((i, j))
             array_2d[(-j+(TERRITORY_SIZE-1))][i] = uav[len(uav)-1].uav_world.points[(i, j)].weight
-
+    # debug
+    # print(f"plume_boxes:\n {plume_boxes}\nlength of plume_boxes is {len(plume_boxes)}")
 
 
     fig, ax = plt.subplots()
@@ -39,6 +40,9 @@ def mpl_paint_weights_map(uav: List[UAV], time_iter: int, world: World, finish_f
     # Loop over data dimensions and create text annotations.
     for i in range(TERRITORY_SIZE):
         for j in range(TERRITORY_SIZE):
+            # debug
+            # print(f"{(i)}")
+
             if (j, i) == ((TERRITORY_SIZE-1)/2, (TERRITORY_SIZE-1)/2):
                 text = ax.text(j, i, round(array_2d[i][j])//modifier,
                                ha="center", va="center", color="yellow", backgroundcolor='red',
@@ -47,6 +51,11 @@ def mpl_paint_weights_map(uav: List[UAV], time_iter: int, world: World, finish_f
                 if world.points[(j, i)].c == 0.75:
                     text = ax.text(j, (TERRITORY_SIZE - 1) - i, round(array_2d[i][j])//modifier,
                                    ha="center", va="center", color="k", backgroundcolor='yellow',
+                                   fontsize='xx-small', fontweight='bold')
+
+                elif world.points[(j, i)].c == 1:
+                    text = ax.text(j, (TERRITORY_SIZE - 1) - i, round(array_2d[i][j])//modifier,
+                                   ha="center", va="center", color="k", backgroundcolor='red',
                                    fontsize='xx-small', fontweight='bold')
                 elif world.points[(j, i)].c == 0.5:
                     text = ax.text(j, (TERRITORY_SIZE - 1) - i, round(array_2d[i][j])//modifier,
@@ -60,8 +69,14 @@ def mpl_paint_weights_map(uav: List[UAV], time_iter: int, world: World, finish_f
                     text = ax.text(j, (TERRITORY_SIZE - 1) - i, round(array_2d[i][j])//modifier,
                                    ha="center", va="center", color="k", backgroundcolor='brown',
                                    fontsize='xx-small', fontweight='bold')
+                text = ax.text(j, i,
+                               round(array_2d[i][j]) // modifier
+                               ,
+                               ha="center", va="center", color="k", fontsize=5, fontweight='bold')
             else:
-                text = ax.text(j, i, round(array_2d[i][j])//modifier,
+                text = ax.text(j, i,
+                               round(array_2d[i][j])//modifier
+                               ,
                                ha="center", va="center", color="k", fontsize=5, fontweight='bold')
 
     for n in range(len(uav)):
