@@ -1,7 +1,7 @@
 """
 Defining objects used in package:
-- Graph {G}, which contains vertexes {V}
-- Vertex, which have coordinates V{x,y}, plume concentration C{x,y}
+- Graph World {World}, which contains vertexes Point's {Point}
+- Vertex, which have coordinates Point{x,y}, plume concentration C{x,y}
 - UAV - agent class, defining the methods UAV can perform
 
 """
@@ -13,14 +13,13 @@ from src.utils import ros_commands
 from src.world.territory import Point, World
 from typing import Any, Dict, List, Tuple
 
-
 @dataclass
 class UAV:
     """Object representing single UAV and his behaviour"""
     id: int  # UAV's id
-    # cur_vertex: Vertex
     uav_world: World
     cur_point: Point
+    logs_file: Any
     cur_mode: str  # Текущий режим: 'search' - обход территории, 'localize' - локализация источника загрязнения
     localize_stage: str = "UNKNOWN"
     return_stage: str = "UNKNOWN"
@@ -31,6 +30,7 @@ class UAV:
     reach_point: Point = None
     publisher_obj: Any = None
     time_iterations: Dict[int, int] = field(default_factory=dict)
+
 
     uav_compass = {
         'opposite': {
@@ -50,6 +50,7 @@ class UAV:
     def move_to(self, target_point: Point) -> None:
         """Moving to target_point"""
         print(f'UAV with id {self.id} moving to {target_point} from {self.cur_point}')
+        self.logs_file.write(f'UAV with id {self.id} moving to {target_point} from {self.cur_point}\n')
         # ros_commands.move_uav(self.id,
         #                       self.cur_point.x,
         #                       self.cur_point.y,
@@ -57,6 +58,7 @@ class UAV:
         #                       target_point.y)
         self.cur_point = target_point
         print(f"UAV with id {self.id} completed moving to {target_point}")
+        self.logs_file.write(f"UAV with id {self.id} completed moving to {target_point}\n")
 
     def get_target_point_reaching(self):
         """
@@ -117,15 +119,20 @@ class UAV:
         "measuring" plume from cur_point Point and getting concentration "point.c"
         """
         print(f'UAV with id {self.id} scanning Point x = {self.cur_point.x} y = {self.cur_point.y}')
+    #   self.logs_file.write(f'UAV with id {self.id} scanning Point x = {self.cur_point.x} y = {self.cur_point.y}\n')
         self.cur_point.c = sensor_plume.c
         print(f"the plume value is c = {self.cur_point.c}")
+    #   self.logs_file.write(f"the plume value is c = {self.cur_point.c}\n")
 
     def measure_wind_direction(self, sensor_wind_direction: Point) -> None:
         """modeling anemometer measurements at cur_point Point and getting wind direction"""
         print(f'UAV with id {self.id} measures wind at Point x = {self.cur_point.x} y = {self.cur_point.y}')
+        self.logs_file.write(f'UAV with id {self.id} measures wind at Point '
+                             f'x = {self.cur_point.x} y = {self.cur_point.y}\n')
         self.cur_point.wind = sensor_wind_direction.wind
         self.anemometer_data = sensor_wind_direction.wind
-        print(f"the wind direction is c = {self.cur_point.wind}")
+        print(f"the wind direction is: {self.cur_point.wind}")
+        self.logs_file.write(f"the wind direction is: {self.cur_point.wind}\n")
 
     def mark_point(self) -> None:
         """function is not used"""
@@ -166,9 +173,12 @@ class UAV:
         # Получение всех существующих соседних точек и их координат в виде списка
         nearby_points_coords: list = self._get_nearby_points_coords()
         print(f"uav{self.id} at ({self.cur_point.x},{self.cur_point.y}) and nearby points are\n{nearby_points_coords}")
+        self.logs_file.write(f"uav{self.id} at ({self.cur_point.x},{self.cur_point.y}) and "
+                             f"nearby points are\n{nearby_points_coords}\n")
         # Выбор из всех соседних точек нужной с наибольшим весом
         target_point_coords: Tuple = self._get_target_point(nearby_points_coords, shift)
         print(f'uav{self.id} chosen {target_point_coords} as target point')
+        self.logs_file.write(f'uav{self.id} chosen {target_point_coords} as target point\n')
         # Присвоение координат целевой точке в соответствии с расчётами выше
         self.target_point = self.uav_world.points[target_point_coords]
 
@@ -226,6 +236,8 @@ class UAV:
             # Выбор точки, которая соответствует выбранному направлению движения
             self.target_point = self.uav_world.points[self._get_direction_point(moving_direction)]
             print(f'uav{self.id} found plume and in LOCALIZE mode\nchosen {self.target_point} as target point')
+            self.logs_file.write(f'uav{self.id} found plume and in LOCALIZE mode\nchosen {self.target_point}'
+                                 f' as target point\n')
 
         # Если стадия локализации - возвращение к загрязнению:
         if self.localize_stage == 'RETURN_TO_PLUME':
@@ -271,14 +283,14 @@ class UAV:
         Функция для определения одного из двух перпенидкулярных направлений, в которых можно продолжить движение
         """
         print(f"debug 3")
-        return "NORTH"
+        return self.uav_compass['perpendicular'][self.anemometer_data][0]
 
     def _get_to_plume_direction_step_2(self) -> str:
         """
         ВНИМАНИЕ! ЗАГЛУШКА! ТРЕБУЕТСЯ РАЗРАБОТКА
         Функция для определения одного из двух перпенидкулярных направлений, в которых можно продолжить движение
         """
-        return "SOUTH"
+        return self.uav_compass['perpendicular'][self.anemometer_data][1]
 
     def _get_moving_direction(self) -> str:
         """
